@@ -1,0 +1,33 @@
+﻿
+
+
+<div class="map-grid-container" style="grid-template-columns: repeat(@($"{Width}"), 1fr);">
+    @for(int col = 0; col < Width; col++)
+    {
+        @for(int row = 0; row < Height; row++)
+        {
+            <div style="width: 20px; height: 20px; background-color: @(GetColorForTile(row, col));">
+                
+            </div>
+        }
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public int Width { get; set; }
+
+    [Parameter]
+    public int Height { get; set; }
+
+    public string GetColorForTile(int row, int col)
+    {
+        var red = (float)row / Height * 256;
+        var green = (float)col / Width * 256;
+        var blue = 0;
+
+        return $"rgb({red}, {green}, {blue})";
+    }
+
+}

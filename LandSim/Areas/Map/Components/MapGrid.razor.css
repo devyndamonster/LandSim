@@ -1,0 +1,4 @@
+﻿.map-grid-container {
+    display: grid;
+    grid-gap: 1px;
+}
