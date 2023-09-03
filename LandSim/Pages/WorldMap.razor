@@ -1,16 +1,17 @@
 ﻿@page "/world"
 @using LandSim.Areas.Map.Components
+@using LandSim.Areas.Map;
 
 <PageTitle>World Map</PageTitle>
 
 <div style="display: flex; flex-direction: row; height:100%;">
 
-    <GenerationSettingsMenu />
+    <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" />
 
     <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
         <div style="height:100%; width:100%; position:relative;">
             <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
-                <MapGrid Height="100" Width="100" />
+                <MapGrid Settings="Settings" />
             </div>
         </div>
         
@@ -21,5 +22,21 @@
 
 @code {
 
+    public GenerationSettings Settings { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Settings = new GenerationSettings
+        {
+            Width = 50,
+            Height = 50
+        };
+    }
+
+    private void UpdateSettings(GenerationSettings settings)
+    {
+        Settings = settings;
+        StateHasChanged();
+    }
 
 }

@@ -2,13 +2,12 @@
 
 
 
-<div class="map-grid-container" style="grid-template-columns: repeat(@($"{Width}"), 1fr);">
-    @for(int col = 0; col < Width; col++)
+<div class="map-grid-container" style="grid-template-columns: repeat(@(Width), 1fr);">
+    @for (int row = 0; row < Height; row++)
     {
-        @for(int row = 0; row < Height; row++)
+        @for (int col = 0; col < Width; col++)
         {
-            <div style="width: 20px; height: 20px; background-color: @(GetColorForTile(row, col));">
-                
+            <div id="[@row][@col]" style="min-width: 20px; min-height: 20px; padding-top: 100%; background-color: @(GetColorForTile(row, col));">
             </div>
         }
     }
@@ -17,12 +16,17 @@
 @code {
 
     [Parameter]
-    public int Width { get; set; }
+    public GenerationSettings Settings { get; set; }
 
-    [Parameter]
-    public int Height { get; set; }
-
+    private int Width;
+    private int Height;
     private List<int> Permutations { get; set; } = GetPermutations();
+
+    protected override void OnParametersSet()
+    {
+        Width = Settings.Width;
+        Height = Settings.Height;
+    }
 
     public string GetColorForTile(int row, int col)
     {
@@ -35,8 +39,6 @@
 
         return $"rgb({red}, {green}, {blue})";
     }
-
-
 
     private static List<int> GetPermutations()
     {

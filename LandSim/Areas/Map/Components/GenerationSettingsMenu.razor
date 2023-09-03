@@ -1,5 +1,46 @@
-﻿<h3>Settings</h3>
+﻿
+<div style="display: flex; flex-direction:column; padding:10px;">
+    <h3>Settings</h3>
+
+    <label> Seed: </label>
+    <input type="text" @bind="Seed" />
+
+    <label> Width: </label>
+    <input type="number" @bind="Width" />
+
+    <label> Height: </label>
+    <input type="number" @bind="Height" />
+
+    <button @onclick="Save">Save</button>
+</div>
+
 
 @code {
 
+    [Parameter, EditorRequired]
+    public GenerationSettings Settings { get; set; }
+
+    [Parameter, EditorRequired]
+    public Action<GenerationSettings> OnSettingsUpdated { get; set; }
+
+    public string Seed = string.Empty;
+    public int Width = 50;
+    public int Height = 50;
+
+    protected override void OnInitialized()
+    {
+        Seed = Settings.Seed;
+        Width = Settings.Width;
+        Height = Settings.Height;
+    }
+
+    private void Save()
+    {
+        OnSettingsUpdated(new GenerationSettings
+        {
+            Seed = Seed,
+            Width = Width,
+            Height = Height,
+        });
+    }
 }
