@@ -3,10 +3,23 @@
 
 <PageTitle>World Map</PageTitle>
 
-<MapGrid Width="255" Height="255"/>
+<div style="display: flex; flex-direction: row; height:100%;">
+
+    <GenerationSettingsMenu />
+
+    <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
+        <div style="height:100%; width:100%; position:relative;">
+            <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
+                <MapGrid Height="100" Width="100" />
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+
 
 @code {
-
 
 
 }
