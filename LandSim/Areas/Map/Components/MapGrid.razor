@@ -1,4 +1,5 @@
-﻿
+﻿@using LandSim.Extensions;
+
 
 
 <div class="map-grid-container" style="grid-template-columns: repeat(@($"{Width}"), 1fr);">
@@ -21,13 +22,79 @@
     [Parameter]
     public int Height { get; set; }
 
+    private List<int> Permutations { get; set; } = GetPermutations();
+
     public string GetColorForTile(int row, int col)
     {
-        var red = (float)row / Height * 256;
-        var green = (float)col / Width * 256;
-        var blue = 0;
+        var frequency = 0.085314f;
+        var perlinNoiseValue = PerlinNoise(frequency * col, frequency * row);
+
+        var red = (float)perlinNoiseValue * 256;
+        var green = (float)perlinNoiseValue * 256;
+        var blue = (float)perlinNoiseValue * 256;
 
         return $"rgb({red}, {green}, {blue})";
+    }
+
+
+
+    private static List<int> GetPermutations()
+    {
+        var permutations = Enumerable.Range(0, 255).Shuffle().ToList();
+        permutations.AddRange(permutations);
+        return permutations;
+    }
+
+    public float PerlinNoise(float x, float y)
+    {
+        var xCoord = (int) MathF.Floor(x) % 256;
+        var yCoord = (int) MathF.Floor(y) % 256;
+        var xFloat = x - MathF.Floor(x);
+        var yFloat = y - MathF.Floor(y);
+
+        //Get vectors pointing to the value from the corners of the tile
+        var topRight = new Vector2(xFloat - 1.0f, yFloat - 1.0f);
+        var topLeft = new Vector2(xFloat, yFloat - 1.0f);
+        var bottomRight = new Vector2(xFloat - 1.0f, yFloat);
+        var bottomLeft = new Vector2(xFloat, yFloat);
+
+        var valueTopRight = Permutations[Permutations[xCoord + 1] + yCoord + 1];
+        var valueTopLeft = Permutations[Permutations[xCoord] + yCoord + 1];
+        var valueBottomRight = Permutations[Permutations[xCoord + 1] + yCoord];
+        var valueBottomLeft = Permutations[Permutations[xCoord] + yCoord];
+
+        var dotTopRight = topRight.Dot(GetConstantCornerVector(valueTopRight));
+        var dotTopLeft = topLeft.Dot(GetConstantCornerVector(valueTopLeft));
+        var dotBottomRight = bottomRight.Dot(GetConstantCornerVector(valueBottomRight));
+        var dotBottomLeft = bottomLeft.Dot(GetConstantCornerVector(valueBottomLeft));
+
+        var u = Fade(xFloat);
+        var v = Fade(yFloat);
+
+        var perlineNoise = Lerp(u, Lerp(v, dotBottomLeft, dotTopLeft), Lerp(v, dotBottomRight, dotTopRight));
+
+        return (perlineNoise + 1) / 2;
+    }
+
+    private Vector2 GetConstantCornerVector(int randomValue)
+    {
+        return (randomValue % 4) switch
+        {
+            0 => new Vector2(1, 1),
+            1 => new Vector2(-1, 1),
+            2 => new Vector2(-1, -1),
+            _ => new Vector2(1, -1)
+        };
+    }
+
+    private float Lerp(float t, float a, float b)
+    {
+        return a + t * (b - a);
+    }
+
+    private float Fade(float t)
+    {
+        return ((6 * t - 15) * t + 10) * t * t * t;
     }
 
 }
