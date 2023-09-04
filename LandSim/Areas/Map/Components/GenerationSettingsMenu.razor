@@ -14,6 +14,31 @@
     <label> Frequency: </label>
     <input type="number" step="0.001" @bind="Settings.Frequency" />
 
+    <div style="background-color:lightgrey; padding:5px;">
+        <button @onclick="() => Settings.ColorSelectors.Add(new ColorSelector())">Add</button>
+        @foreach (var colorSelector in Settings.ColorSelectors)
+        {
+            <div style="border:2px solid @(colorSelector.Color.GetCssColor()); padding:5px; display:flex; flex-direction:column; margin-top:5px;">
+                <label> Min Value: </label>
+                <input type="number" step="0.01" @bind="colorSelector.MinValue" />
+
+                <label> Max Value: </label>
+                <input type="number" step="0.01" @bind="colorSelector.MaxValue" />
+
+                <label> Red: </label>
+                <input type="number" step="0.1" @bind="colorSelector.Color.Red" />
+
+                <label> Green: </label>
+                <input type="number" step="0.1" @bind="colorSelector.Color.Green" />
+
+                <label> Blue: </label>
+                <input type="number" step="0.1" @bind="colorSelector.Color.Blue" />
+
+                <button @onclick="() => Settings.ColorSelectors.Remove(colorSelector)">Remove</button>
+            </div>
+        }
+    </div>
+    
     <button @onclick="Save">Save</button>
 </div>
 
@@ -28,12 +53,6 @@
 
     private void Save()
     {
-        OnSettingsUpdated(new GenerationSettings
-        {
-            Seed = Settings.Seed,
-            Width = Settings.Width,
-            Height = Settings.Height,
-            Frequency = Settings.Frequency,
-        });
+        OnSettingsUpdated(Settings);
     }
 }

@@ -30,11 +30,12 @@
         var frequency = Settings.Frequency;
         var perlinNoiseValue = PerlinNoise(frequency * col, frequency * row);
 
-        var red = (float)perlinNoiseValue * 256;
-        var green = (float)perlinNoiseValue * 256;
-        var blue = (float)perlinNoiseValue * 256;
+        var perlinColor = new Color(perlinNoiseValue * 256);
 
-        return $"rgb({red}, {green}, {blue})";
+        var selectorColor = Settings.ColorSelectors
+            .FirstOrDefault(selector => selector.DoesApply(perlinNoiseValue))?.Color;
+
+        return selectorColor?.GetCssColor() ?? perlinColor.GetCssColor();
     }
 
     private List<int> GetPermutations()
