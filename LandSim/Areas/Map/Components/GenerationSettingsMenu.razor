@@ -3,13 +3,16 @@
     <h3>Settings</h3>
 
     <label> Seed: </label>
-    <input type="text" @bind="Seed" />
+    <input type="text" @bind="Settings.Seed" />
 
     <label> Width: </label>
-    <input type="number" @bind="Width" />
+    <input type="number" @bind="Settings.Width" />
 
     <label> Height: </label>
-    <input type="number" @bind="Height" />
+    <input type="number" @bind="Settings.Height" />
+
+    <label> Frequency: </label>
+    <input type="number" step="0.001" @bind="Settings.Frequency" />
 
     <button @onclick="Save">Save</button>
 </div>
@@ -23,24 +26,14 @@
     [Parameter, EditorRequired]
     public Action<GenerationSettings> OnSettingsUpdated { get; set; }
 
-    public string Seed = string.Empty;
-    public int Width = 50;
-    public int Height = 50;
-
-    protected override void OnInitialized()
-    {
-        Seed = Settings.Seed;
-        Width = Settings.Width;
-        Height = Settings.Height;
-    }
-
     private void Save()
     {
         OnSettingsUpdated(new GenerationSettings
         {
-            Seed = Seed,
-            Width = Width,
-            Height = Height,
+            Seed = Settings.Seed,
+            Width = Settings.Width,
+            Height = Settings.Height,
+            Frequency = Settings.Frequency,
         });
     }
 }

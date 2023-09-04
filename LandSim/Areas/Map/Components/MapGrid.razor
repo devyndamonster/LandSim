@@ -2,10 +2,10 @@
 
 
 
-<div class="map-grid-container" style="grid-template-columns: repeat(@(Width), 1fr);">
-    @for (int row = 0; row < Height; row++)
+<div class="map-grid-container" style="grid-template-columns: repeat(@(Settings.Width), 1fr);">
+    @for (int row = 0; row < Settings.Height; row++)
     {
-        @for (int col = 0; col < Width; col++)
+        @for (int col = 0; col < Settings.Width; col++)
         {
             <div id="[@row][@col]" style="min-width: 20px; min-height: 20px; padding-top: 100%; background-color: @(GetColorForTile(row, col));">
             </div>
@@ -18,19 +18,16 @@
     [Parameter]
     public GenerationSettings Settings { get; set; }
 
-    private int Width;
-    private int Height;
-    private List<int> Permutations { get; set; } = GetPermutations();
+    private List<int> Permutations { get; set; }
 
     protected override void OnParametersSet()
     {
-        Width = Settings.Width;
-        Height = Settings.Height;
+        Permutations = GetPermutations();
     }
 
     public string GetColorForTile(int row, int col)
     {
-        var frequency = 0.085314f;
+        var frequency = Settings.Frequency;
         var perlinNoiseValue = PerlinNoise(frequency * col, frequency * row);
 
         var red = (float)perlinNoiseValue * 256;
@@ -40,9 +37,9 @@
         return $"rgb({red}, {green}, {blue})";
     }
 
-    private static List<int> GetPermutations()
+    private List<int> GetPermutations()
     {
-        var permutations = Enumerable.Range(0, 255).Shuffle().ToList();
+        var permutations = Enumerable.Range(0, 255).Shuffle(new Random(Settings.Seed.GetHashCode())).ToList();
         permutations.AddRange(permutations);
         return permutations;
     }
