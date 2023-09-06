@@ -1,5 +1,6 @@
 ﻿@page "/world"
 @using LandSim.Areas.Map.Components
+@using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Map;
 
 <PageTitle>World Map</PageTitle>
@@ -24,14 +25,18 @@
 
     public GenerationSettings Settings { get; set; }
 
+    [Inject]
+    public MapGenerationRepository MapRepository { get; set; }
+
     protected override void OnInitialized()
     {
-        Settings = new GenerationSettings();
+        Settings = MapRepository.GetSettings();
     }
 
     private void UpdateSettings(GenerationSettings settings)
     {
         Settings = settings;
+        MapRepository.SaveSettings(settings);
         StateHasChanged();
     }
 

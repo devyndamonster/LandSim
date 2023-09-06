@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/LandSim/LandSim.db
+/LandSim/LandSim.db-wal
+/LandSim/LandSim.db-shm

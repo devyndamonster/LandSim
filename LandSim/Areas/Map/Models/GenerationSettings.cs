@@ -1,7 +1,9 @@
-﻿namespace LandSim.Areas.Map
+﻿namespace LandSim.Areas.Map.Models
 {
     public class GenerationSettings
     {
+        public int GenerationSettingsId { get; set; }
+
         public string Seed { get; set; } = string.Empty;
 
         public int Width { get; set; } = 50;
@@ -10,6 +12,6 @@
 
         public float Frequency { get; set; } = 0.055f;
 
-        public List<ColorSelector> ColorSelectors { get; set; } = new List<ColorSelector>();
+        public ICollection<ColorSelector> ColorSelectors { get; set; } = new List<ColorSelector>();
     }
 }

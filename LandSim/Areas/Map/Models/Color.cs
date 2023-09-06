@@ -1,8 +1,10 @@
-﻿namespace LandSim.Areas.Map
+﻿namespace LandSim.Areas.Map.Models
 {
     public class Color
     {
-        public float Red {  get; set; }
+        public int ColorId { get; set; }
+
+        public float Red { get; set; }
 
         public float Green { get; set; }
 

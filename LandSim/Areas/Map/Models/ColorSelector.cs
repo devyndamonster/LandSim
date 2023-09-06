@@ -1,7 +1,9 @@
-﻿namespace LandSim.Areas.Map
+﻿namespace LandSim.Areas.Map.Models
 {
     public class ColorSelector
     {
+        public int ColorSelectorId { get; set; }
+
         public float MaxValue { get; set; } = 1f;
 
         public float MinValue { get; set; } = 0f;
