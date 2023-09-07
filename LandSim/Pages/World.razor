@@ -1,0 +1,17 @@
+﻿@page "/world"
+@using LandSim.Areas.Map.Components
+@using LandSim.Areas.Map.Models;
+@using LandSim.Areas.Map;
+
+<PageTitle>World Map</PageTitle>
+
+<h1>Map Goes Here</h1>
+
+
+
+@code {
+
+    [Inject]
+    public MapGenerationRepository MapRepository { get; set; }
+
+}

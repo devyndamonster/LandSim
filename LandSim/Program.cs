@@ -8,6 +8,7 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContext<MapContext>();
 builder.Services.AddScoped<MapGenerationRepository>();
+builder.Services.AddSingleton<TerrainService>();
 
 var app = builder.Build();
 

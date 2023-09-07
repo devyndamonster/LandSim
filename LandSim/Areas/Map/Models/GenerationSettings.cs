@@ -12,6 +12,6 @@
 
         public float Frequency { get; set; } = 0.055f;
 
-        public ICollection<ColorSelector> ColorSelectors { get; set; } = new List<ColorSelector>();
+        public ICollection<TerrainSelector> TerrainSelectors { get; set; } = new List<TerrainSelector>();
     }
 }

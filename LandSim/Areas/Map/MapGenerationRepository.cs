@@ -32,8 +32,7 @@ namespace LandSim.Areas.Map
         public GenerationSettings GetSettings()
         {
             var settings = _mapContext.GenerationSettings
-                .Include(setting => setting.ColorSelectors)
-                .ThenInclude(selector => selector.Color)
+                .Include(setting => setting.TerrainSelectors)
                 .ToList()
                 .FirstOrDefault();
 

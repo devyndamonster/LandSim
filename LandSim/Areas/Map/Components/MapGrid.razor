@@ -1,4 +1,5 @@
-﻿@using LandSim.Areas.Map.Models;
+﻿@using LandSim.Areas.Map.Enums;
+@using LandSim.Areas.Map.Models;
 @using LandSim.Extensions;
 
 
@@ -19,6 +20,9 @@
     [Parameter]
     public GenerationSettings Settings { get; set; }
 
+    [Inject]
+    public TerrainService TerrainService { get; set; }
+
     private List<int> Permutations { get; set; }
 
     protected override void OnParametersSet()
@@ -33,8 +37,10 @@
 
         var perlinColor = new Color(perlinNoiseValue * 256);
 
-        var selectorColor = Settings.ColorSelectors
-            .FirstOrDefault(selector => selector.DoesApply(perlinNoiseValue))?.Color;
+        var terrainType = Settings.TerrainSelectors
+            .FirstOrDefault(selector => selector.DoesApply(perlinNoiseValue))?.TerrainType ?? TerrainType.Water;
+
+        var selectorColor = TerrainService.GetColorForTerrain(terrainType);
 
         return selectorColor?.GetCssColor() ?? perlinColor.GetCssColor();
     }

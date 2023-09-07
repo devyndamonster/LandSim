@@ -1,14 +1,16 @@
-﻿namespace LandSim.Areas.Map.Models
+﻿using LandSim.Areas.Map.Enums;
+
+namespace LandSim.Areas.Map.Models
 {
-    public class ColorSelector
+    public class TerrainSelector
     {
-        public int ColorSelectorId { get; set; }
+        public int TerrainSelectorId { get; set; }
 
         public float MaxValue { get; set; } = 1f;
 
         public float MinValue { get; set; } = 0f;
 
-        public Color Color { get; set; } = new Color(0f, 0f, 0f);
+        public TerrainType TerrainType { get; set; }
 
         public bool DoesApply(float value)
         {

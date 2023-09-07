@@ -7,9 +7,8 @@ namespace LandSim.Areas.Map
     {
         public DbSet<GenerationSettings> GenerationSettings { get; set; }
 
-        public DbSet<ColorSelector> ColorSelectors { get; set; }
+        public DbSet<TerrainSelector> TerrainSelectors { get; set; }
 
-        public DbSet<Color> Colors { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

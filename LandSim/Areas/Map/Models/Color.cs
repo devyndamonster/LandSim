@@ -2,8 +2,6 @@
 {
     public class Color
     {
-        public int ColorId { get; set; }
-
         public float Red { get; set; }
 
         public float Green { get; set; }
