@@ -2,3 +2,9 @@
     display: grid;
     grid-gap: 1px;
 }
+
+.terrain-tile {
+    min-width: 20px;
+    min-height: 20px;
+    padding-top: 100%;
+}

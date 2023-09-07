@@ -12,7 +12,7 @@
     <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
         <div style="height:100%; width:100%; position:relative;">
             <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
-                <MapGrid Settings="Settings" />
+                <MapGrid Terrain="Terrain" />
             </div>
         </div>
         
@@ -23,19 +23,27 @@
 
 @code {
 
-    public GenerationSettings Settings { get; set; }
-
     [Inject]
     public MapGenerationRepository MapRepository { get; set; }
+
+    [Inject]
+    public TerrainService TerrainService { get; set; }
+
+    private TerrainTile[,] Terrain { get; set; }
+
+    private GenerationSettings Settings { get; set; }
 
     protected override void OnInitialized()
     {
         Settings = MapRepository.GetSettings();
+        Terrain = TerrainService.GenerateTerrain(Settings);
     }
 
     private void UpdateSettings(GenerationSettings settings)
     {
         Settings = settings;
+        Terrain = TerrainService.GenerateTerrain(Settings);
+
         MapRepository.SaveSettings(settings);
         StateHasChanged();
     }
