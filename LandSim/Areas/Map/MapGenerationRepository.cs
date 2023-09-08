@@ -39,5 +39,49 @@ namespace LandSim.Areas.Map
             return settings ?? new GenerationSettings();
         }
 
+        public void SaveTerrain(TerrainTile[,] terrain)
+        {
+            _mapContext.TerrainTiles.RemoveRange(_mapContext.TerrainTiles);
+
+            for(var x = 0; x < terrain.GetLength(0); x++)
+            {
+                for(int y = 0; y < terrain.GetLength(1); y++)
+                {
+                    _mapContext.Add(terrain[x, y]);
+                }
+            }
+
+            _mapContext.SaveChanges();
+        }
+
+        public TerrainTile[,] GetTerrain()
+        {
+            var terrain = _mapContext.TerrainTiles.ToList();
+
+            var minX = terrain[0].XCoord;
+            var maxX = terrain[0].XCoord;
+            var minY = terrain[0].YCoord;
+            var maxY = terrain[0].YCoord;
+
+            foreach(var terrainTile in terrain)
+            {
+                if(terrainTile.XCoord < minX) minX = terrainTile.XCoord;
+                if(terrainTile.YCoord < minY) minY = terrainTile.YCoord;
+                if(terrainTile.XCoord > maxX) maxX = terrainTile.XCoord;
+                if(terrainTile.YCoord > maxY) maxY = terrainTile.YCoord;
+            }
+
+            var sizeX = maxX - minX + 1;
+            var sizeY = maxY - minY + 1;
+            var terrainArray = new TerrainTile[sizeX, sizeY];
+
+            foreach(var terrainTile in terrain)
+            {
+                terrainArray[terrainTile.XCoord - minX, terrainTile.YCoord - minY] = terrainTile;
+            }
+
+            return terrainArray;
+        }
+
     }
 }

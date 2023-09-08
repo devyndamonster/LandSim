@@ -5,7 +5,13 @@
 
 <PageTitle>World Map</PageTitle>
 
-<h1>Map Goes Here</h1>
+<div style="height:100%; width:100%; padding:5px;">
+    <div style="height:100%; width:100%; position:relative;">
+        <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
+            <MapGrid Terrain="terrain" />
+        </div>
+    </div>
+</div>
 
 
 
@@ -13,5 +19,12 @@
 
     [Inject]
     public MapGenerationRepository MapRepository { get; set; }
+
+    private TerrainTile[,] terrain { get; set; }
+
+    protected override void OnInitialized()
+    {
+        terrain = MapRepository.GetTerrain();
+    }
 
 }

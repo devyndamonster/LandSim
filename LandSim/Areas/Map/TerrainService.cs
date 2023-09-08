@@ -47,7 +47,8 @@ namespace LandSim.Areas.Map
 
         private List<int> GetPermutations(GenerationSettings settings)
         {
-            var permutations = Enumerable.Range(0, 255).Shuffle(new Random(settings.Seed.GetHashCode())).ToList();
+            var seed = settings.Seed.GetHashCode();
+            var permutations = Enumerable.Range(0, 255).Shuffle(new Random(seed)).ToList();
             permutations.AddRange(permutations);
             return permutations;
         }

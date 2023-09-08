@@ -9,6 +9,8 @@ namespace LandSim.Areas.Map
 
         public DbSet<TerrainSelector> TerrainSelectors { get; set; }
 
+        public DbSet<TerrainTile> TerrainTiles { get; set; }
+
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

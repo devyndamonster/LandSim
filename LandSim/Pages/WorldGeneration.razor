@@ -7,7 +7,7 @@
 
 <div style="display: flex; flex-direction: row; height:100%;">
 
-    <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" />
+    <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" OnGeneratedTerrainApplied="SaveGeneratedTerrain" />
 
     <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
         <div style="height:100%; width:100%; position:relative;">
@@ -48,4 +48,8 @@
         StateHasChanged();
     }
 
+    private void SaveGeneratedTerrain()
+    {
+        MapRepository.SaveTerrain(Terrain);
+    }
 }
