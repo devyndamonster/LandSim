@@ -1,7 +1,7 @@
 ﻿@page "/world"
-@using LandSim.Areas.Map.Components
-@using LandSim.Areas.Map.Models;
+@using LandSim.Areas.Map.Components;
 @using LandSim.Areas.Map;
+@using LandSim.Areas.Map.Models;
 
 <PageTitle>World Map</PageTitle>
 
@@ -18,13 +18,46 @@
 @code {
 
     [Inject]
-    public MapGenerationRepository MapRepository { get; set; }
+    public IServiceProvider Services { get; set; }
+
+    [Inject]
+    public NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    public ILogger<World> Logger { get; set; }
 
     private TerrainTile[,] terrain { get; set; }
+    private System.Timers.Timer timer;
 
     protected override void OnInitialized()
     {
-        terrain = MapRepository.GetTerrain();
+        terrain = GetTerrain();
+
+        timer = new System.Timers.Timer(1000);
+        timer.Elapsed += CountDownTimer;
+        timer.Enabled = true;
+    }
+
+    public async void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs e)
+    {
+        terrain = GetTerrain();
+        Logger.LogInformation($"Tile on page is {terrain[0,0].TerrainType}");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public TerrainTile[,] GetTerrain()
+    {
+        using (var scope = Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
+
+            return db.GetTerrain();
+        }
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
     }
 
 }

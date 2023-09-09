@@ -2,7 +2,7 @@
 using LandSim.Areas.Map.Models;
 using LandSim.Extensions;
 
-namespace LandSim.Areas.Map
+namespace LandSim.Areas.Map.Services
 {
     public class TerrainService
     {
@@ -23,13 +23,13 @@ namespace LandSim.Areas.Map
             var terrain = new TerrainTile[settings.Width, settings.Height];
             var permutations = GetPermutations(settings);
 
-            for(var x = 0; x < settings.Width; x++)
+            for (var x = 0; x < settings.Width; x++)
             {
-                for(var y = 0; y < settings.Height; y++)
+                for (var y = 0; y < settings.Height; y++)
                 {
                     var perlinNoiseValue = PerlinNoise(settings.Frequency * x, settings.Frequency * y, permutations);
 
-                    var terrainType = settings.TerrainSelectors.FirstOrDefault(selector => 
+                    var terrainType = settings.TerrainSelectors.FirstOrDefault(selector =>
                         selector.DoesApply(perlinNoiseValue))?.TerrainType ?? TerrainType.Water;
 
                     terrain[x, y] = new TerrainTile
