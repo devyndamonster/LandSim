@@ -10,7 +10,7 @@ namespace LandSim.Areas.Map.Services
         {
             var baseColor = GetColorForTerrain(tile.TerrainType);
             var vegitationColor = new Color(0, 200, 0);
-            return Color.Lerp(baseColor, vegitationColor, tile.VegetationLevel > 0 ? 1 : 0);
+            return Color.Lerp(baseColor, vegitationColor, tile.VegetationLevel);
         }
         
         public Color GetColorForTerrain(TerrainType terrainType)

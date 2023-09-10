@@ -58,6 +58,11 @@ namespace LandSim.Areas.Map.Services
                                 {
                                     updatedTile.VegetationLevel += 0.01f;
                                 }
+
+                                if (updatedTile.VegetationLevel > 0)
+                                {
+                                    updatedTile.VegetationLevel += 0.01f;
+                                }
                             }
 
                             updatedTiles[x, y] = updatedTile;
