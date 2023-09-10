@@ -16,37 +16,30 @@
 
 
 @code {
-
+    
     [Inject]
     public IServiceScopeFactory Services { get; set; }
 
     [Inject]
-    public NavigationManager NavigationManager { get; set; }
-
-    [Inject]
     public ILogger<World> Logger { get; set; }
 
+    [Inject]
+    public SimulationEventAggregator SimulationEventAggregator { get; set; }
+
     private TerrainTile[,] terrain { get; set; }
-    private System.Timers.Timer timer;
 
     protected override void OnInitialized()
     {
         terrain = GetTerrain();
 
-        timer = new System.Timers.Timer(1000);
-        timer.Elapsed += CountDownTimer;
-        timer.Enabled = true;
+        SimulationEventAggregator.Subscribe<MapUpdateEvent>(UpdateTerrain);
     }
 
-    public async void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs e)
+    public void UpdateTerrain(MapUpdateEvent mapUpdateEvent)
     {
-        var updatedTerrain = GetTerrain();
-
-        if(updatedTerrain.GetLength(0) != 0 && updatedTerrain.GetLength(1) != 0)
-        {
-            terrain = updatedTerrain;
-            await InvokeAsync(StateHasChanged);
-        }
+        terrain = mapUpdateEvent.TerrainTiles;
+        
+        InvokeAsync(StateHasChanged);
     }
 
     public TerrainTile[,] GetTerrain()
@@ -61,7 +54,7 @@
 
     public void Dispose()
     {
-        timer?.Dispose();
+        SimulationEventAggregator.Unsubscribe<MapUpdateEvent>(UpdateTerrain);
     }
 
 }

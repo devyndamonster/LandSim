@@ -10,11 +10,13 @@ namespace LandSim.Areas.Map.Services
     {
         private readonly ILogger<BackgroundSimulationService> _logger;
         private readonly IServiceScopeFactory _services;
+        private readonly SimulationEventAggregator _eventAggregator;
 
-        public BackgroundSimulationService(ILogger<BackgroundSimulationService> logger, IServiceScopeFactory services)
+        public BackgroundSimulationService(ILogger<BackgroundSimulationService> logger, IServiceScopeFactory services, SimulationEventAggregator eventAggregator)
         {
             _logger = logger;
             _services = services;
+            _eventAggregator = eventAggregator;
         }
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -83,7 +85,9 @@ namespace LandSim.Areas.Map.Services
 
                     mapRepository.SaveTerrain(currentTiles);
 
-                    await Task.Delay(2000, stoppingToken);
+                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = currentTiles });
+
+                    await Task.Delay(500, stoppingToken);
                 }
             }
         }
