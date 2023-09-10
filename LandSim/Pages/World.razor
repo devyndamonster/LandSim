@@ -8,7 +8,7 @@
 <div style="height:100%; width:100%; padding:5px;">
     <div style="height:100%; width:100%; position:relative;">
         <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
-            <MapGrid Terrain="terrain" />
+            <MapGrid Terrain="terrain" Consumables="consumables" />
         </div>
     </div>
 </div>
@@ -16,21 +16,25 @@
 
 
 @code {
-    
-    [Inject]
-    public IServiceScopeFactory Services { get; set; }
 
     [Inject]
-    public ILogger<World> Logger { get; set; }
+    public IServiceScopeFactory Services { get; set; } = null!;
 
     [Inject]
-    public SimulationEventAggregator SimulationEventAggregator { get; set; }
+    public ILogger<World> Logger { get; set; } = null!;
 
-    private TerrainTile[,] terrain { get; set; }
+    [Inject]
+    public SimulationEventAggregator SimulationEventAggregator { get; set; } = null!;
+
+    private TerrainTile?[,] terrain { get; set; } = new TerrainTile[0, 0];
+
+    private Consumable?[,] consumables { get; set; } = new Consumable[0, 0];
 
     protected override void OnInitialized()
     {
-        terrain = GetTerrain();
+        var worldData = GetWorldData();
+        terrain = worldData.TerrainTiles;
+        consumables = worldData.Consumables;
 
         SimulationEventAggregator.Subscribe<MapUpdateEvent>(UpdateTerrain);
     }
@@ -38,17 +42,17 @@
     public void UpdateTerrain(MapUpdateEvent mapUpdateEvent)
     {
         terrain = mapUpdateEvent.TerrainTiles;
-        
+        consumables = mapUpdateEvent.Consumables;
+
         InvokeAsync(StateHasChanged);
     }
 
-    public TerrainTile[,] GetTerrain()
+    public WorldData GetWorldData()
     {
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
-            var terrain = db.GetTerrain();
-            return terrain;
+            return db.GetWorldData();
         }
     }
 

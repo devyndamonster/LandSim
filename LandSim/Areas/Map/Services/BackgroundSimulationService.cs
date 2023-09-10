@@ -31,23 +31,24 @@ namespace LandSim.Areas.Map.Services
 
                     var random = new Random();
 
-                    var currentTiles = mapRepository.GetTerrain();
-                    var updatedTiles = new TerrainTile[currentTiles.GetLength(0), currentTiles.GetLength(1)];
-                    
-                    for(var x = 0; x < currentTiles.GetLength(0); x++)
-                    {
-                        for (var y = 0; y < currentTiles.GetLength(1); y++)
-                        {
-                            var updatedTile = currentTiles[x, y]?.Clone();
+                    var currentWorldData = mapRepository.GetWorldData();
+                    var updatedWorldData = currentWorldData.Clone();
 
-                            if (updatedTile == null)
+                    for (var x = 0; x < currentWorldData.Bounds.SizeX; x++)
+                    {
+                        for (var y = 0; y < currentWorldData.Bounds.SizeY; y++)
+                        {
+                            var currentTile = currentWorldData.TerrainTiles[x, y];
+                            var updatedTile = updatedWorldData.TerrainTiles[x, y];
+
+                            if (updatedTile == null || currentTile == null)
                             {
                                 continue;
                             }
 
-                            if (updatedTile.TerrainType == TerrainType.Soil)
+                            if (currentTile.TerrainType == TerrainType.Soil)
                             {
-                                var surroundingTiles = currentTiles.GetImmediateNeighbors(x, y);
+                                var surroundingTiles = currentWorldData.TerrainTiles.GetImmediateNeighbors(x, y);
                                 
                                 if (random.NextDouble() >= 0.9999)
                                 {
@@ -59,24 +60,37 @@ namespace LandSim.Areas.Map.Services
                                     updatedTile.VegetationLevel += 0.01f;
                                 }
 
-                                if (updatedTile.VegetationLevel > 0)
+                                if (currentTile.VegetationLevel > 0)
                                 {
                                     updatedTile.VegetationLevel += 0.01f;
                                 }
+                                
+                                if (currentTile.VegetationLevel > 0.95 && random.NextDouble() >= 0.99 && currentWorldData.Consumables[x,y] == null)
+                                {
+                                    updatedWorldData.Consumables[x, y] = new Consumable
+                                    {
+                                        XCoord = currentTile.XCoord,
+                                        YCoord = currentTile.YCoord,
+                                    };
+                                }
                             }
 
-                            updatedTiles[x, y] = updatedTile;
+                            updatedWorldData.TerrainTiles[x, y] = updatedTile;
                         }
                     }
-                    
+
                     // TODO: Couldn't figure out how to do this by just returning the updated tiles, so need to track the changes by updating the existing tiles.
                     // Should try to find a solution that doesn't involve two loops
-                    for (var x = 0; x < currentTiles.GetLength(0); x++)
+
+                    var removedConsumables = new List<Consumable>();
+                    var addedConsumables = new List<Consumable>();
+
+                    for (var x = 0; x < currentWorldData.Bounds.SizeX; x++)
                     {
-                        for (var y = 0; y < currentTiles.GetLength(1); y++)
+                        for (var y = 0; y < currentWorldData.Bounds.SizeY; y++)
                         {
-                            var existingTile = currentTiles[x, y];
-                            var updatedTile = updatedTiles[x, y];
+                            var existingTile = currentWorldData.TerrainTiles[x, y];
+                            var updatedTile = updatedWorldData.TerrainTiles[x, y];
 
                             if (existingTile == null || updatedTile == null)
                             {
@@ -85,12 +99,24 @@ namespace LandSim.Areas.Map.Services
 
                             existingTile.VegetationLevel = updatedTile.VegetationLevel;
                             existingTile.TerrainType = updatedTile.TerrainType;
+
+                            
+                            if (currentWorldData.Consumables[x, y] != null && updatedWorldData.Consumables[x, y] == null)
+                            {
+                                removedConsumables.Add(currentWorldData.Consumables[x, y]!);
+                            }
+                            else if(currentWorldData.Consumables[x, y] == null && updatedWorldData.Consumables[x, y] != null)
+                            {
+                                addedConsumables.Add(updatedWorldData.Consumables[x, y]!);
+                            }
                         }
                     }
 
-                    mapRepository.SaveTerrain(currentTiles);
+                    mapRepository.SaveTerrain(currentWorldData.TerrainTiles);
+                    mapRepository.RemoveConsumables(removedConsumables);
+                    mapRepository.AddConsumables(addedConsumables);
 
-                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = currentTiles });
+                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedWorldData.TerrainTiles, Consumables = updatedWorldData.Consumables });
 
                     await Task.Delay(500, stoppingToken);
                 }

@@ -9,7 +9,14 @@
     {
         @for (int y = 0; y < Terrain.GetLength(1); y++)
         {
-            <div id="[@x][@y]" class="terrain-tile" style="background-color: @(GetColorForTile(Terrain[x,y]));"/>
+            <div id="[@x][@y]" class="terrain-tile" style="background-color: @(GetColorForTile(Terrain[x,y]));">
+                <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; display: flex; justify-content: center; align-items: center; color: white;">
+                    @if(Consumables.IsInArray(x, y) && Consumables[x, y] is not null)
+                    {
+                        <div>&#127813;</div>
+                    }
+                </div>
+            </div>
         }
     }
 </div>
@@ -17,14 +24,22 @@
 @code {
 
     [Parameter, EditorRequired]
-    public TerrainTile[,] Terrain { get; set; }
+    public TerrainTile?[,] Terrain { get; set; } = new TerrainTile?[0, 0];
+
+    [Parameter]
+    public Consumable?[,] Consumables { get; set; } = new Consumable?[0, 0];
 
     [Inject]
-    public TerrainService TerrainService { get; set; }
+    public TerrainService TerrainService { get; set; } = default!;
 
-    protected string GetColorForTile(TerrainTile tile)
+    protected string GetColorForTile(TerrainTile? tile)
     {
-        return TerrainService.GetColorForTerrain(tile).GetCssColor();
+        if(tile != null)
+        {
+            return TerrainService.GetColorForTerrain(tile).GetCssColor();
+        }
+
+        return (new Color(0)).GetCssColor();
     }
 
 }

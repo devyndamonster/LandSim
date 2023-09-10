@@ -2,7 +2,7 @@
 
 namespace LandSim.Areas.Map.Models
 {
-    public class TerrainTile
+    public class TerrainTile : ILocation
     {
         public int TerrainTileId { get; set; }
 
@@ -16,7 +16,8 @@ namespace LandSim.Areas.Map.Models
 
         private float _vegitiationLevel { get; set; }
 
-        public float VegetationLevel { 
+        public float VegetationLevel
+        { 
             get => _vegitiationLevel;
             set => _vegitiationLevel = Math.Clamp(value, 0, 1);
         }
@@ -33,5 +34,6 @@ namespace LandSim.Areas.Map.Models
                 VegetationLevel = VegetationLevel
             };
         }
+        
     }
 }

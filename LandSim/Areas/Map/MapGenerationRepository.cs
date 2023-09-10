@@ -18,7 +18,7 @@ namespace LandSim.Areas.Map
         {
             var currentSettings = _mapContext.GenerationSettings.FirstOrDefault(s => s.GenerationSettingsId == settings.GenerationSettingsId);
 
-            if(currentSettings != null)
+            if (currentSettings != null)
             {
                 _mapContext.Update(settings);
             }
@@ -40,57 +40,44 @@ namespace LandSim.Areas.Map
             return settings ?? new GenerationSettings();
         }
 
-        public void ReplaceTerrain(TerrainTile[,] terrain)
+        public void ReplaceTerrain(TerrainTile?[,] terrain)
         {
             _mapContext.Database.ExecuteSqlRaw("DELETE FROM TerrainTiles");
+            _mapContext.Database.ExecuteSqlRaw("DELETE FROM Consumables");
 
             foreach (var tile in terrain)
             {
-                _mapContext.TerrainTiles.Add(tile);
+                if (tile != null)
+                {
+                    _mapContext.TerrainTiles.Add(tile);
+                }
             }
 
             _mapContext.SaveChanges();
         }
 
-        public void SaveTerrain(TerrainTile[,] terrain)
+        public void SaveTerrain(TerrainTile?[,] terrain)
         {
             var updatedTerrain = terrain.Flatten();
             _mapContext.TerrainTiles.UpdateRange(updatedTerrain);
             _mapContext.SaveChanges();
         }
 
-        public TerrainTile[,] GetTerrain()
+        public void AddConsumables(IEnumerable<Consumable> consumables)
         {
-            var terrain = _mapContext.TerrainTiles.ToList();
-            
-            if (terrain.Count() == 0)
-            {
-                return new TerrainTile[0,0];
-            }
-            
-            var minX = terrain[0].XCoord;
-            var maxX = terrain[0].XCoord;
-            var minY = terrain[0].YCoord;
-            var maxY = terrain[0].YCoord;
+            _mapContext.Consumables.AddRange(consumables);
+            _mapContext.SaveChanges();
+        }
 
-            foreach(var terrainTile in terrain)
-            {
-                if(terrainTile.XCoord < minX) minX = terrainTile.XCoord;
-                if(terrainTile.YCoord < minY) minY = terrainTile.YCoord;
-                if(terrainTile.XCoord > maxX) maxX = terrainTile.XCoord;
-                if(terrainTile.YCoord > maxY) maxY = terrainTile.YCoord;
-            }
+        public void RemoveConsumables(IEnumerable<Consumable> consumables)
+        {
+            _mapContext.Consumables.RemoveRange(consumables);
+            _mapContext.SaveChanges();
+        }
 
-            var sizeX = maxX - minX + 1;
-            var sizeY = maxY - minY + 1;
-            var terrainArray = new TerrainTile[sizeX, sizeY];
-
-            foreach(var terrainTile in terrain)
-            {
-                terrainArray[terrainTile.XCoord - minX, terrainTile.YCoord - minY] = terrainTile;
-            }
-
-            return terrainArray;
+        public WorldData GetWorldData()
+        {
+            return new WorldData(_mapContext.TerrainTiles.ToArray(), _mapContext.Consumables.ToArray());
         }
 
     }

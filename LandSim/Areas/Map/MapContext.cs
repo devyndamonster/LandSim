@@ -8,9 +8,11 @@ namespace LandSim.Areas.Map
         public DbSet<GenerationSettings> GenerationSettings { get; set; }
 
         public DbSet<TerrainSelector> TerrainSelectors { get; set; }
-
-        public DbSet<TerrainTile> TerrainTiles { get; set; }
         
+        public DbSet<TerrainTile> TerrainTiles { get; set; }
+
+        public DbSet<Consumable> Consumables { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite("Data Source=LandSim.db");
