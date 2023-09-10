@@ -6,6 +6,13 @@ namespace LandSim.Areas.Map.Services
 {
     public class TerrainService
     {
+        public Color GetColorForTerrain(TerrainTile tile)
+        {
+            var baseColor = GetColorForTerrain(tile.TerrainType);
+            var vegitationColor = new Color(0, 200, 0);
+            return Color.Lerp(baseColor, vegitationColor, tile.VegetationLevel > 0 ? 1 : 0);
+        }
+        
         public Color GetColorForTerrain(TerrainType terrainType)
         {
             return terrainType switch
@@ -47,7 +54,7 @@ namespace LandSim.Areas.Map.Services
 
         private List<int> GetPermutations(GenerationSettings settings)
         {
-            var seed = settings.Seed.GetHashCode();
+            var seed = settings.Seed.GetDeterministicHashCode();
             var permutations = Enumerable.Range(0, 255).Shuffle(new Random(seed)).ToList();
             permutations.AddRange(permutations);
             return permutations;

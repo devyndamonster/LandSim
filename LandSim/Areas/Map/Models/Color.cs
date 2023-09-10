@@ -26,5 +26,16 @@
         {
             return $"rgb({Red}, {Green}, {Blue})";
         }
+
+        public static Color Lerp(Color a, Color b, float t)
+        {
+            return new Color(Lerp(a.Red, b.Red, t), Lerp(a.Green, b.Green, t), Lerp(a.Blue, b.Blue, t));
+            
+        }
+
+        private static float Lerp(float a, float b, float t)
+        {
+            return a + t * (b - a);
+        }
     }
 }

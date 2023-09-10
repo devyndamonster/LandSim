@@ -18,7 +18,7 @@
 @code {
 
     [Inject]
-    public IServiceProvider Services { get; set; }
+    public IServiceScopeFactory Services { get; set; }
 
     [Inject]
     public NavigationManager NavigationManager { get; set; }
@@ -40,9 +40,13 @@
 
     public async void CountDownTimer(Object? source, System.Timers.ElapsedEventArgs e)
     {
-        terrain = GetTerrain();
-        Logger.LogInformation($"Tile on page is {terrain[0,0].TerrainType}");
-        await InvokeAsync(StateHasChanged);
+        var updatedTerrain = GetTerrain();
+
+        if(updatedTerrain.GetLength(0) != 0 && updatedTerrain.GetLength(1) != 0)
+        {
+            terrain = updatedTerrain;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     public TerrainTile[,] GetTerrain()
@@ -50,8 +54,8 @@
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
-
-            return db.GetTerrain();
+            var terrain = db.GetTerrain();
+            return terrain;
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using LandSim.Areas.Map.Models;
+using LandSim.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace LandSim.Areas.Map
@@ -39,25 +40,34 @@ namespace LandSim.Areas.Map
             return settings ?? new GenerationSettings();
         }
 
-        public void SaveTerrain(TerrainTile[,] terrain)
+        public void ReplaceTerrain(TerrainTile[,] terrain)
         {
-            _mapContext.TerrainTiles.RemoveRange(_mapContext.TerrainTiles);
+            _mapContext.Database.ExecuteSqlRaw("DELETE FROM TerrainTiles");
 
-            for(var x = 0; x < terrain.GetLength(0); x++)
+            foreach (var tile in terrain)
             {
-                for(int y = 0; y < terrain.GetLength(1); y++)
-                {
-                    _mapContext.Add(terrain[x, y]);
-                }
+                _mapContext.TerrainTiles.Add(tile);
             }
 
+            _mapContext.SaveChanges();
+        }
+
+        public void SaveTerrain(TerrainTile[,] terrain)
+        {
+            var updatedTerrain = terrain.Flatten();
+            _mapContext.TerrainTiles.UpdateRange(updatedTerrain);
             _mapContext.SaveChanges();
         }
 
         public TerrainTile[,] GetTerrain()
         {
             var terrain = _mapContext.TerrainTiles.ToList();
-
+            
+            if (terrain.Count() == 0)
+            {
+                return new TerrainTile[0,0];
+            }
+            
             var minX = terrain[0].XCoord;
             var maxX = terrain[0].XCoord;
             var minY = terrain[0].YCoord;

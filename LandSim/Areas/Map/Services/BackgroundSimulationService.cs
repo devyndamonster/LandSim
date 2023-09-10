@@ -1,4 +1,6 @@
 ﻿using LandSim.Areas.Map.Enums;
+using LandSim.Areas.Map.Models;
+using LandSim.Extensions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,9 +9,9 @@ namespace LandSim.Areas.Map.Services
     public class BackgroundSimulationService : BackgroundService
     {
         private readonly ILogger<BackgroundSimulationService> _logger;
-        private readonly IServiceProvider _services;
+        private readonly IServiceScopeFactory _services;
 
-        public BackgroundSimulationService(ILogger<BackgroundSimulationService> logger, IServiceProvider services)
+        public BackgroundSimulationService(ILogger<BackgroundSimulationService> logger, IServiceScopeFactory services)
         {
             _logger = logger;
             _services = services;
@@ -19,22 +21,69 @@ namespace LandSim.Areas.Map.Services
         {
             using(var scope = _services.CreateScope())
             {
-                var mapContext = scope.ServiceProvider.GetRequiredService<MapContext>();
+                var mapRepository = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
-                    var tile = await mapContext.TerrainTiles.FirstAsync();
+                    _logger.LogInformation($"Running background sim loop");
 
-                    if (tile.TerrainType == TerrainType.Water) tile.TerrainType = TerrainType.Soil;
-                    else if (tile.TerrainType == TerrainType.Soil) tile.TerrainType = TerrainType.Rock;
-                    else if (tile.TerrainType == TerrainType.Rock) tile.TerrainType = TerrainType.Sand;
-                    else if (tile.TerrainType == TerrainType.Sand) tile.TerrainType = TerrainType.Water;
+                    var random = new Random();
 
-                    _logger.LogInformation($"Changed tile to {tile.TerrainType}");
+                    var currentTiles = mapRepository.GetTerrain();
+                    var updatedTiles = new TerrainTile[currentTiles.GetLength(0), currentTiles.GetLength(1)];
                     
-                    await mapContext.SaveChangesAsync();
+                    for(var x = 0; x < currentTiles.GetLength(0); x++)
+                    {
+                        for (var y = 0; y < currentTiles.GetLength(1); y++)
+                        {
+                            var updatedTile = currentTiles[x, y]?.Clone();
 
-                    await Task.Delay(1000, stoppingToken);
+                            if (updatedTile == null)
+                            {
+                                continue;
+                            }
+
+                            if (updatedTile.TerrainType == TerrainType.Soil)
+                            {
+                                var surroundingTiles = currentTiles.GetImmediateNeighbors(x, y);
+                                
+                                if (random.NextDouble() >= 0.9999)
+                                {
+                                    updatedTile.VegetationLevel += 0.01f;
+                                }
+
+                                if(random.NextDouble() >= 0.9 && surroundingTiles.Any(t => t.VegetationLevel > 0))
+                                {
+                                    updatedTile.VegetationLevel += 0.01f;
+                                }
+                            }
+
+                            updatedTiles[x, y] = updatedTile;
+                        }
+                    }
+                    
+                    // TODO: Couldn't figure out how to do this by just returning the updated tiles, so need to track the changes by updating the existing tiles.
+                    // Should try to find a solution that doesn't involve two loops
+                    for (var x = 0; x < currentTiles.GetLength(0); x++)
+                    {
+                        for (var y = 0; y < currentTiles.GetLength(1); y++)
+                        {
+                            var existingTile = currentTiles[x, y];
+                            var updatedTile = updatedTiles[x, y];
+
+                            if (existingTile == null || updatedTile == null)
+                            {
+                                continue;
+                            }
+
+                            existingTile.VegetationLevel = updatedTile.VegetationLevel;
+                            existingTile.TerrainType = updatedTile.TerrainType;
+                        }
+                    }
+
+                    mapRepository.SaveTerrain(currentTiles);
+
+                    await Task.Delay(2000, stoppingToken);
                 }
             }
         }

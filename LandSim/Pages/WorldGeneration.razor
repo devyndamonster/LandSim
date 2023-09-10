@@ -48,9 +48,9 @@
         MapRepository.SaveSettings(settings);
         StateHasChanged();
     }
-
+    
     private void SaveGeneratedTerrain()
     {
-        MapRepository.SaveTerrain(Terrain);
+        MapRepository.ReplaceTerrain(Terrain);
     }
 }
