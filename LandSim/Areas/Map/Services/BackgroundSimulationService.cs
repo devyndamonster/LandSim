@@ -11,12 +11,18 @@ namespace LandSim.Areas.Map.Services
         private readonly ILogger<BackgroundSimulationService> _logger;
         private readonly IServiceScopeFactory _services;
         private readonly SimulationEventAggregator _eventAggregator;
+        private readonly SimulationService _simulationService;
 
-        public BackgroundSimulationService(ILogger<BackgroundSimulationService> logger, IServiceScopeFactory services, SimulationEventAggregator eventAggregator)
+        public BackgroundSimulationService(
+            ILogger<BackgroundSimulationService> logger,
+            IServiceScopeFactory services,
+            SimulationEventAggregator eventAggregator,
+            SimulationService simulationService)
         {
             _logger = logger;
             _services = services;
             _eventAggregator = eventAggregator;
+            _simulationService = simulationService;
         }
         
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -28,95 +34,29 @@ namespace LandSim.Areas.Map.Services
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     _logger.LogInformation($"Running background sim loop");
-
-                    var random = new Random();
-
+                    
                     var currentWorldData = mapRepository.GetWorldData();
-                    var updatedWorldData = currentWorldData.Clone();
+                    var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData);
+                    
+                    var locationToTileUpdates = simulationUpdates.UpdatedTiles
+                        .ToDictionary(tile => (x: tile?.XCoord, y: tile?.YCoord), tile => tile);
 
-                    for (var x = 0; x < currentWorldData.Bounds.SizeX; x++)
-                    {
-                        for (var y = 0; y < currentWorldData.Bounds.SizeY; y++)
+                    var updatedTerrainGrid = currentWorldData.TerrainTiles
+                        .Map(tile =>
                         {
-                            var currentTile = currentWorldData.TerrainTiles[x, y];
-                            var updatedTile = updatedWorldData.TerrainTiles[x, y];
-
-                            if (updatedTile == null || currentTile == null)
+                            if (locationToTileUpdates.TryGetValue((tile?.XCoord, tile?.YCoord), out var updatedTile))
                             {
-                                continue;
+                                return updatedTile;
                             }
 
-                            if (currentTile.TerrainType == TerrainType.Soil)
-                            {
-                                var surroundingTiles = currentWorldData.TerrainTiles.GetImmediateNeighbors(x, y);
-                                
-                                if (random.NextDouble() >= 0.9999)
-                                {
-                                    updatedTile.VegetationLevel += 0.01f;
-                                }
-
-                                if(random.NextDouble() >= 0.9 && surroundingTiles.Any(t => t.VegetationLevel > 0))
-                                {
-                                    updatedTile.VegetationLevel += 0.01f;
-                                }
-
-                                if (currentTile.VegetationLevel > 0)
-                                {
-                                    updatedTile.VegetationLevel += 0.01f;
-                                }
-                                
-                                if (currentTile.VegetationLevel > 0.95 && random.NextDouble() >= 0.99 && currentWorldData.Consumables[x,y] == null)
-                                {
-                                    updatedWorldData.Consumables[x, y] = new Consumable
-                                    {
-                                        XCoord = currentTile.XCoord,
-                                        YCoord = currentTile.YCoord,
-                                    };
-                                }
-                            }
-
-                            updatedWorldData.TerrainTiles[x, y] = updatedTile;
-                        }
-                    }
-
-                    // TODO: Couldn't figure out how to do this by just returning the updated tiles, so need to track the changes by updating the existing tiles.
-                    // Should try to find a solution that doesn't involve two loops
-
-                    var removedConsumables = new List<Consumable>();
-                    var addedConsumables = new List<Consumable>();
-
-                    for (var x = 0; x < currentWorldData.Bounds.SizeX; x++)
-                    {
-                        for (var y = 0; y < currentWorldData.Bounds.SizeY; y++)
-                        {
-                            var existingTile = currentWorldData.TerrainTiles[x, y];
-                            var updatedTile = updatedWorldData.TerrainTiles[x, y];
-
-                            if (existingTile == null || updatedTile == null)
-                            {
-                                continue;
-                            }
-
-                            existingTile.VegetationLevel = updatedTile.VegetationLevel;
-                            existingTile.TerrainType = updatedTile.TerrainType;
-
-                            
-                            if (currentWorldData.Consumables[x, y] != null && updatedWorldData.Consumables[x, y] == null)
-                            {
-                                removedConsumables.Add(currentWorldData.Consumables[x, y]!);
-                            }
-                            else if(currentWorldData.Consumables[x, y] == null && updatedWorldData.Consumables[x, y] != null)
-                            {
-                                addedConsumables.Add(updatedWorldData.Consumables[x, y]!);
-                            }
-                        }
-                    }
+                            return tile;
+                        });
 
                     mapRepository.SaveTerrain(currentWorldData.TerrainTiles);
-                    mapRepository.RemoveConsumables(removedConsumables);
-                    mapRepository.AddConsumables(addedConsumables);
-
-                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedWorldData.TerrainTiles, Consumables = updatedWorldData.Consumables });
+                    //mapRepository.AddConsumables(simulationUpdates.AddedConsumables);
+                    
+                    //TODO: add consumables
+                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedTerrainGrid, Consumables = new Consumable[0,0] });
 
                     await Task.Delay(500, stoppingToken);
                 }

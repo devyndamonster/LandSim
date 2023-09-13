@@ -10,6 +10,7 @@ builder.Services.AddTransient<MapGenerationRepository>();
 builder.Services.AddSingleton<TerrainService>();
 builder.Services.AddHostedService<BackgroundSimulationService>();
 builder.Services.AddSingleton<SimulationEventAggregator>();
+builder.Services.AddSingleton<DatabaseConnection>();
 
 var app = builder.Build();
 

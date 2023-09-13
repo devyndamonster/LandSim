@@ -8,16 +8,18 @@ namespace LandSim.Areas.Map
     public class MapGenerationRepository
     {
         private readonly MapContext _mapContext;
+        private readonly DatabaseConnection _connection;
 
-        public MapGenerationRepository(MapContext mapContext)
+        public MapGenerationRepository(MapContext mapContext, DatabaseConnection connection)
         {
             _mapContext = mapContext;
+            _connection = connection;
         }
 
         public void SaveSettings(GenerationSettings settings)
         {
             var currentSettings = _mapContext.GenerationSettings.FirstOrDefault(s => s.GenerationSettingsId == settings.GenerationSettingsId);
-
+            
             if (currentSettings != null)
             {
                 _mapContext.Update(settings);
@@ -56,11 +58,14 @@ namespace LandSim.Areas.Map
             _mapContext.SaveChanges();
         }
 
-        public void SaveTerrain(TerrainTile?[,] terrain)
+        public void SaveTerrain(IEnumerable<TerrainTile> updatedTiles)
         {
-            var updatedTerrain = terrain.Flatten();
-            _mapContext.TerrainTiles.UpdateRange(updatedTerrain);
-            _mapContext.SaveChanges();
+            using var connection = _connection.GetConnection();
+            
+            foreach (var tile in updatedTiles)
+            {
+                //TODO: Do the update with SQL
+            }
         }
 
         public void AddConsumables(IEnumerable<Consumable> consumables)

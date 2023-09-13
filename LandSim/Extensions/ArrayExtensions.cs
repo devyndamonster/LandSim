@@ -77,7 +77,31 @@
 
             return flattened;
         }
+        
+        public static IEnumerable<TResult> Select<T, TResult>(this T?[,] map, Func<(int x, int y, T? Value), TResult> func)
+        {
+            for (int x = 0; x < map.GetLength(0); x++)
+            {
+                for (int y = 0; y < map.GetLength(1); y++)
+                {
+                    yield return func((x, y, map[x, y]));
+                }
+            }
+        }
 
+        public static T?[,] Map<T>(this T?[,] array, Func<T?, T?> func)
+        {
+            var newArray = new T?[array.GetLength(0), array.GetLength(1)];
 
+            for (int x = 0; x < array.GetLength(0); x++)
+            {
+                for (int y = 0; y < array.GetLength(1); y++)
+                {
+                    newArray[x, y] = func(array[x, y]);
+                }
+            }
+
+            return newArray;
+        }
     }
 }
