@@ -11,6 +11,7 @@ builder.Services.AddSingleton<TerrainService>();
 builder.Services.AddHostedService<BackgroundSimulationService>();
 builder.Services.AddSingleton<SimulationEventAggregator>();
 builder.Services.AddSingleton<DatabaseConnection>();
+builder.Services.AddSingleton<SimulationService>();
 
 var app = builder.Build();
 

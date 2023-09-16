@@ -37,7 +37,9 @@ namespace LandSim.Areas.Map.Models
 
         public bool HasChanged(TerrainTile other)
         {
-            return TerrainType != other.TerrainType || Height != other.Height || VegetationLevel != other.VegetationLevel;
+            return TerrainType != other.TerrainType 
+                || Height != other.Height 
+                || VegetationLevel != other.VegetationLevel;
         }
 
     }

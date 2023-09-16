@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Dapper;
 using LandSim.Areas.Map.Models;
 using LandSim.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -46,7 +47,7 @@ namespace LandSim.Areas.Map
         {
             _mapContext.Database.ExecuteSqlRaw("DELETE FROM TerrainTiles");
             _mapContext.Database.ExecuteSqlRaw("DELETE FROM Consumables");
-
+            
             foreach (var tile in terrain)
             {
                 if (tile != null)
@@ -57,15 +58,27 @@ namespace LandSim.Areas.Map
 
             _mapContext.SaveChanges();
         }
-
-        public void SaveTerrain(IEnumerable<TerrainTile> updatedTiles)
+        
+        public async Task SaveTerrain(IEnumerable<TerrainTile> updatedTiles)
         {
             using var connection = _connection.GetConnection();
+            connection.Open();
+            
+            using var transaction = connection.BeginTransaction();
+
+            var sql = 
+            """
+                UPDATE TerrainTiles
+                SET TerrainType = @TerrainType, Height = @Height, VegetationLevel = @VegetationLevel
+                WHERE TerrainTileId = @TerrainTileId
+            """;
             
             foreach (var tile in updatedTiles)
             {
-                //TODO: Do the update with SQL
+                await connection.ExecuteAsync(sql, tile);
             }
+
+            transaction.Commit();
         }
 
         public void AddConsumables(IEnumerable<Consumable> consumables)
@@ -80,9 +93,25 @@ namespace LandSim.Areas.Map
             _mapContext.SaveChanges();
         }
 
-        public WorldData GetWorldData()
+        public async Task<WorldData> GetWorldData()
         {
-            return new WorldData(_mapContext.TerrainTiles.ToArray(), _mapContext.Consumables.ToArray());
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                SELECT 
+                    TerrainTileId,
+                    TerrainType,
+                    Height,
+                    VegetationLevel,
+                    XCoord,
+                    YCoord
+                FROM TerrainTiles
+            """;
+
+            var terrainTiles = await connection.QueryAsync<TerrainTile>(sql);
+
+            return new WorldData(terrainTiles.ToArray());
         }
 
     }

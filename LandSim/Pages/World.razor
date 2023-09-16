@@ -30,9 +30,9 @@
 
     private Consumable?[,] consumables { get; set; } = new Consumable[0, 0];
 
-    protected override void OnInitialized()
+    protected override async void OnInitialized()
     {
-        var worldData = GetWorldData();
+        var worldData = await GetWorldData();
         terrain = worldData.TerrainTiles;
         consumables = worldData.Consumables;
 
@@ -47,12 +47,12 @@
         InvokeAsync(StateHasChanged);
     }
 
-    public WorldData GetWorldData()
+    public async Task<WorldData> GetWorldData()
     {
         using (var scope = Services.CreateScope())
         {
             var db = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
-            return db.GetWorldData();
+            return await db.GetWorldData();
         }
     }
 

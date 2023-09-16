@@ -52,7 +52,7 @@ namespace LandSim.Areas.Map.Services
 
             var vegitationChange = randomValue switch
             {
-                var value when value > 0.999 => 0.01f,
+                var value when value > 0.9999 => 0.01f,
                 var value when value > 0.9 && surroundingTiles.Any(t => t.VegetationLevel > 0) => 0.01f,
                 _ when tile.VegetationLevel > 0 => 0.01f,
                 _ => 0
@@ -60,7 +60,10 @@ namespace LandSim.Areas.Map.Services
 
             return new TerrainTile
             {
+                TerrainTileId = tile.TerrainTileId,
                 VegetationLevel = tile.VegetationLevel + vegitationChange,
+                TerrainType = tile.TerrainType,
+                Height = tile.Height,
                 XCoord = tile.XCoord,
                 YCoord = tile.YCoord,
             };
