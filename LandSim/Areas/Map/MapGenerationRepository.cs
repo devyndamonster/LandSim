@@ -59,7 +59,7 @@ namespace LandSim.Areas.Map
             _mapContext.SaveChanges();
         }
         
-        public async Task SaveTerrain(IEnumerable<TerrainTile> updatedTiles)
+        public async Task SaveSimulationUpdates(SimulationUpdates updates)
         {
             using var connection = _connection.GetConnection();
             connection.Open();
@@ -73,9 +73,20 @@ namespace LandSim.Areas.Map
                 WHERE TerrainTileId = @TerrainTileId
             """;
             
-            foreach (var tile in updatedTiles)
+            foreach (var tile in updates.UpdatedTiles)
             {
                 await connection.ExecuteAsync(sql, tile);
+            }
+
+            sql =
+            """
+                INSERT INTO Consumables (XCoord, YCoord)
+                VALUES (@XCoord, @YCoord)
+            """;
+
+            foreach (var consumable in updates.AddedConsumables)
+            {
+                await connection.ExecuteAsync(sql, consumable);
             }
 
             transaction.Commit();
@@ -111,7 +122,18 @@ namespace LandSim.Areas.Map
 
             var terrainTiles = await connection.QueryAsync<TerrainTile>(sql);
 
-            return new WorldData(terrainTiles.ToArray());
+            sql =
+            """
+                SELECT
+                    ConsumableId,
+                    XCoord,
+                    YCoord
+                FROM Consumables
+            """;
+
+            var consumables = await connection.QueryAsync<Consumable>(sql);
+
+            return new WorldData(terrainTiles.ToArray(), consumables.ToArray());
         }
 
     }

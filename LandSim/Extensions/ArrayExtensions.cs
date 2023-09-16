@@ -89,7 +89,7 @@
             }
         }
 
-        public static T?[,] Map<T>(this T?[,] array, Func<T?, T?> func)
+        public static T?[,] Map<T>(this T?[,] array, Func<(int x, int y, T? Value), T?> func)
         {
             var newArray = new T?[array.GetLength(0), array.GetLength(1)];
 
@@ -97,7 +97,7 @@
             {
                 for (int y = 0; y < array.GetLength(1); y++)
                 {
-                    newArray[x, y] = func(array[x, y]);
+                    newArray[x, y] = func((x, y, array[x, y]));
                 }
             }
 

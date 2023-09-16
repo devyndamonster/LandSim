@@ -47,25 +47,41 @@ namespace LandSim.Areas.Map.Services
                     var locationToTileUpdates = simulationUpdates.UpdatedTiles
                         .ToDictionary(tile => (x: tile?.XCoord, y: tile?.YCoord), tile => tile);
 
+                    var locationToAddedConsumables = simulationUpdates.AddedConsumables
+                        .ToDictionary(consumable => (x: consumable?.XCoord, y: consumable?.YCoord), consumable => consumable);
+
                     var updatedTerrainGrid = currentWorldData.TerrainTiles
                         .Map(tile =>
                         {
-                            if (locationToTileUpdates.TryGetValue((tile?.XCoord, tile?.YCoord), out var updatedTile))
+                            if (locationToTileUpdates.TryGetValue((tile.Value?.XCoord, tile.Value?.YCoord), out var updatedTile))
                             {
                                 return updatedTile;
                             }
 
-                            return tile;
+                            return tile.Value;
+                        });
+
+                    var updatedConsumablesGrid = currentWorldData.Consumables
+                        .Map(consumable =>
+                        {
+                            if (consumable.Value is null)
+                            {
+                                return null;
+                            }
+
+                            if (locationToAddedConsumables.TryGetValue((consumable.Value?.XCoord, consumable.Value?.YCoord), out var addedConsumable))
+                            {
+                                return addedConsumable;
+                            }
+
+                            return consumable.Value;
                         });
                     _logger.LogInformation($"Mapped Updates To Grid - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
-
-
-                    await mapRepository.SaveTerrain(simulationUpdates.UpdatedTiles);
-                    //mapRepository.AddConsumables(simulationUpdates.AddedConsumables);
+                    
+                    await mapRepository.SaveSimulationUpdates(simulationUpdates);
                     _logger.LogInformation($"Saved Terrain - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
-
-                    //TODO: add consumables
-                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedTerrainGrid, Consumables = new Consumable[0,0] });
+                    
+                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedTerrainGrid, Consumables = updatedConsumablesGrid });
 
                     await Task.Delay(500, stoppingToken);
                 }
