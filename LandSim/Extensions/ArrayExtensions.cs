@@ -1,4 +1,6 @@
-﻿namespace LandSim.Extensions
+﻿using LandSim.Areas.Map.Models;
+
+namespace LandSim.Extensions
 {
     public static class ArrayExtensions
     {

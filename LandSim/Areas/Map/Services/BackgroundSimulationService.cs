@@ -41,7 +41,7 @@ namespace LandSim.Areas.Map.Services
                     var currentWorldData = await mapRepository.GetWorldData();
                     _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
                     
-                    var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData);
+                    var simulationUpdates = _simulationService.GetWorldSimulationUpdates(currentWorldData);
                     _logger.LogInformation($"Got Simulation Updates - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
                     var locationToTileUpdates = simulationUpdates.UpdatedTiles
