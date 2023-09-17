@@ -20,5 +20,13 @@ namespace LandSim.Areas.Map.Models
             Consumables = consumables.MapLocationsToBoundedGrid(Bounds);
             Agents = agents.MapLocationsToBoundedGrid(Bounds);
         }
+
+        public WorldData(Bounds bounds, TerrainTile[,] terrainTiles, Consumable[,] consumables, Agent[,] agents)
+        {
+            Bounds = bounds;
+            TerrainTiles = terrainTiles;
+            Consumables = consumables;
+            Agents = agents;
+        }
     }
 }

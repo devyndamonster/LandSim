@@ -105,5 +105,47 @@ namespace LandSim.Extensions
 
             return newArray;
         }
+
+        public static IEnumerable<T> Updates<T>(this T?[,] array, T?[,] otherArray)
+        {
+            for (int x = 0; x < array.GetLength(0); x++)
+            {
+                for (int y = 0; y < array.GetLength(1); y++)
+                {
+                    if (array[x, y] is not null && otherArray[x, y] is not null && !array[x, y]!.Equals(otherArray[x, y]))
+                    {
+                        yield return array[x, y]!;
+                    }
+                }
+            }
+        }
+
+        public static IEnumerable<T> Additions<T>(this T?[,] array, T?[,] otherArray)
+        {
+            for (int x = 0; x < array.GetLength(0); x++)
+            {
+                for (int y = 0; y < array.GetLength(1); y++)
+                {
+                    if (array[x, y] is not null && otherArray[x, y] is null)
+                    {
+                        yield return array[x, y]!;
+                    }
+                }
+            }
+        }
+
+        public static IEnumerable<T> Removals<T>(this T?[,] array, T?[,] otherArray)
+        {
+            for (int x = 0; x < array.GetLength(0); x++)
+            {
+                for (int y = 0; y < array.GetLength(1); y++)
+                {
+                    if (array[x, y] is null && otherArray[x, y] is not null)
+                    {
+                        yield return array[x, y]!;
+                    }
+                }
+            }
+        }
     }
 }

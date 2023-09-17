@@ -1,6 +1,6 @@
 ﻿namespace LandSim.Areas.Map.Models
 {
-    public class Agent : ILocation
+    public record Agent : ILocation
     {
         public int AgentId { get; set; }
         

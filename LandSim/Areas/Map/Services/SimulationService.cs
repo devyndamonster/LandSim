@@ -7,7 +7,7 @@ namespace LandSim.Areas.Map.Services
 {
     public class SimulationService
     {
-        public SimulationUpdates GetWorldSimulationUpdates(WorldData currentWorldData, AgentAction[] actions)
+        public WorldData GetUpdatedWorldData(WorldData currentWorldData, AgentAction[] actions)
         {
             var random = new Random();
 
@@ -28,6 +28,7 @@ namespace LandSim.Areas.Map.Services
                         return agent.Value;
                     }
 
+                    //TODO: Probably want to just combine world data grids at this point
                     var destination = action.ActionType switch
                     {
                         AgentActionType.MoveLeft => (
@@ -90,7 +91,7 @@ namespace LandSim.Areas.Map.Services
 
                 return consumable switch
                 {
-                    var c when c.Value is not null 
+                    var c when c.Value is null 
                         && terrainTile?.VegetationLevel > 0.95 
                         && random.NextDouble() >= 0.99 => 
                             new Consumable { XCoord = terrainTile.XCoord, YCoord = terrainTile.YCoord },
@@ -98,10 +99,20 @@ namespace LandSim.Areas.Map.Services
                 };
             });
 
+            return new WorldData (currentWorldData.Bounds, updatedTilesGrid!, updatedConsumablesGrid!, updatedAgentGrid!);
+        }
+
+        public SimulationUpdates GetSimulationUpdates(WorldData currentWorld, WorldData updatedWorld)
+        {
+            var tileUpdates = updatedWorld.TerrainTiles.Updates(currentWorld.TerrainTiles);
+            var consumableAdditions = updatedWorld.Consumables.Additions(currentWorld.Consumables);
+            var agentUpdates = updatedWorld.Agents.Updates(currentWorld.Agents);
+
             return new SimulationUpdates
             {
-                UpdatedTiles = updatedTiles.ToList(),
-                AddedConsumables = updatedConsumables.ToList()
+                UpdatedTiles = tileUpdates.ToList(),
+                AddedConsumables = consumableAdditions.ToList(),
+                AgentUpdates = agentUpdates.ToList(),
             };
         }
         

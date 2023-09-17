@@ -121,7 +121,7 @@ namespace LandSim.Areas.Map
 
             var consumables = await connection.QueryAsync<Consumable>(sql);
 
-            return new WorldData(terrainTiles.ToArray(), consumables.ToArray());
+            return new WorldData(terrainTiles.ToArray(), consumables.ToArray(), new Agent[0]);
         }
 
         public async Task<Agent[]> GetAgents()
