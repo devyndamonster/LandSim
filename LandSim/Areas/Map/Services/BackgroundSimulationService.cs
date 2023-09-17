@@ -30,7 +30,7 @@ namespace LandSim.Areas.Map.Services
         {
             using(var scope = _services.CreateScope())
             {
-                var mapRepository = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
+                var mapRepository = scope.ServiceProvider.GetRequiredService<MapRepository>();
                 var stopWatch = new Stopwatch();
 
                 while (!stoppingToken.IsCancellationRequested)

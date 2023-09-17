@@ -55,7 +55,7 @@
     {
         using (var scope = Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<MapGenerationRepository>();
+            var db = scope.ServiceProvider.GetRequiredService<MapRepository>();
             return await db.GetWorldData();
         }
     }

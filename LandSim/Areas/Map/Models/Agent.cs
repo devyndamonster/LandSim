@@ -3,6 +3,8 @@
     public record Agent : ILocation
     {
         public int AgentId { get; init; }
+
+        public int AgentOwnerId { get; init; }
         
         public int XCoord { get; init; }
         

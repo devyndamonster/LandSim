@@ -15,6 +15,10 @@ namespace LandSim.Areas.Map
 
         public DbSet<Agent> Agents { get; set; }
 
+        public DbSet<AgentAction> AgentActions { get; set; }
+
+        public DbSet<AgentOwner> AgentOwner { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             optionsBuilder.UseSqlite("Data Source=LandSim.db");

@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace LandSim.Areas.Map
 {
-    public class MapGenerationRepository
+    public class MapRepository
     {
         private readonly MapContext _mapContext;
         private readonly DatabaseConnection _connection;
 
-        public MapGenerationRepository(MapContext mapContext, DatabaseConnection connection)
+        public MapRepository(MapContext mapContext, DatabaseConnection connection)
         {
             _mapContext = mapContext;
             _connection = connection;
@@ -159,6 +159,20 @@ namespace LandSim.Areas.Map
             var agents = await connection.QueryAsync<Agent>(sql);
 
             return new WorldData(terrainTiles.ToArray(), consumables.ToArray(), agents.ToArray());
+        }
+
+        public async Task SetAgentAction(AgentAction action)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                INSERT INTO AgentActions (AgentId, ActionType)
+                VALUES (@AgentId, @ActionType)
+                ON CONFLICT (AgentId) DO UPDATE SET ActionType = @ActionType
+            """;
+
+            await connection.ExecuteAsync(sql, action);
         }
     }
 }
