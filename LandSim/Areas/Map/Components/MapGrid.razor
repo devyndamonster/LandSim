@@ -11,7 +11,11 @@
         {
             <div id="[@x][@y]" class="terrain-tile" style="background-color: @(GetColorForTile(Terrain[x,y]));">
                 <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; display: flex; justify-content: center; align-items: center; color: white;">
-                    @if(Consumables.IsInArray(x, y) && Consumables[x, y] is not null)
+                    @if (Agents.IsInArray(x, y) && Agents[x, y] is not null)
+                    {
+                        <div>&#128023;</div>
+                    }
+                    else if (Consumables.IsInArray(x, y) && Consumables[x, y] is not null)
                     {
                         <div>&#127813;</div>
                     }
@@ -28,6 +32,9 @@
 
     [Parameter]
     public Consumable?[,] Consumables { get; set; } = new Consumable?[0, 0];
+
+    [Parameter]
+    public Agent?[,] Agents { get; set; } = new Agent?[0, 0];
 
     [Inject]
     public TerrainService TerrainService { get; set; } = default!;

@@ -47,7 +47,8 @@ namespace LandSim.Areas.Map
         {
             _mapContext.Database.ExecuteSqlRaw("DELETE FROM TerrainTiles");
             _mapContext.Database.ExecuteSqlRaw("DELETE FROM Consumables");
-            
+            _mapContext.Database.ExecuteSqlRaw("DELETE FROM Agents");
+
             foreach (var tile in terrain)
             {
                 if (tile != null)
@@ -89,6 +90,29 @@ namespace LandSim.Areas.Map
                 await connection.ExecuteAsync(sql, consumable);
             }
 
+            sql =
+            """
+                UPDATE Agents
+                SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst
+                WHERE AgentId = @AgentId
+            """;
+
+            foreach (var agent in updates.AgentUpdates)
+            {
+                await connection.ExecuteAsync(sql, agent);
+            }
+
+            sql =
+            """
+                INSERT INTO Agents (XCoord, YCoord, Hunger, Thirst)
+                VALUES (@XCoord, @YCoord, @Hunger, @Thirst)
+            """;
+
+            foreach (var agent in updates.AddedAgents)
+            {
+                await connection.ExecuteAsync(sql, agent);
+            }
+
             transaction.Commit();
         }
         
@@ -121,14 +145,7 @@ namespace LandSim.Areas.Map
 
             var consumables = await connection.QueryAsync<Consumable>(sql);
 
-            return new WorldData(terrainTiles.ToArray(), consumables.ToArray(), new Agent[0]);
-        }
-
-        public async Task<Agent[]> GetAgents()
-        {
-            using var connection = _connection.GetConnection();
-
-            var sql =
+            sql =
             """
                 SELECT
                     AgentId,
@@ -141,51 +158,7 @@ namespace LandSim.Areas.Map
 
             var agents = await connection.QueryAsync<Agent>(sql);
 
-            return agents.ToArray();
+            return new WorldData(terrainTiles.ToArray(), consumables.ToArray(), agents.ToArray());
         }
-
-        public async Task SaveAgents(Agent[] agents)
-        {
-            using var connection = _connection.GetConnection();
-            connection.Open();
-
-            using var transaction = connection.BeginTransaction();
-
-            var sql =
-            """
-                UPDATE Agents
-                SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst
-                WHERE AgentId = @AgentId
-            """;
-
-            foreach(var agent in agents)
-            {
-                await connection.ExecuteAsync(sql, agent);
-            }
-
-            transaction.Commit();
-        }
-
-        public async Task AddAgents(Agent[] agents)
-        {
-            using var connection = _connection.GetConnection();
-            connection.Open();
-
-            using var transaction = connection.BeginTransaction();
-
-            var sql =
-            """
-                INSERT INTO Agents (XCoord, YCoord, Hunger, Thirst)
-                VALUES (@XCoord, @YCoord, @Hunger, @Thirst)
-            """;
-
-            foreach (var agent in agents)
-            {
-                await connection.ExecuteAsync(sql, agent);
-            }
-
-            transaction.Commit();
-        }
-
     }
 }

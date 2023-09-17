@@ -2,9 +2,9 @@
 {
     public interface ILocation
     {
-        public int XCoord { get; set; }
+        public int XCoord { get; init; }
         
-        public int YCoord { get; set; }
+        public int YCoord { get; init; }
     }
 
     public static class ILocationExtensions

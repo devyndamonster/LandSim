@@ -4,22 +4,22 @@ namespace LandSim.Areas.Map.Models
 {
     public record TerrainTile : ILocation
     {
-        public int TerrainTileId { get; set; }
+        public int TerrainTileId { get; init; }
 
-        public int XCoord { get; set; }
+        public int XCoord { get; init; }
 
-        public int YCoord { get; set; }
+        public int YCoord { get; init; }
 
-        public TerrainType TerrainType { get; set; }
+        public TerrainType TerrainType { get; init; }
 
-        public float Height { get; set; }
+        public float Height { get; init; }
 
         private float _vegitiationLevel { get; set; }
 
         public float VegetationLevel
         { 
             get => _vegitiationLevel;
-            set => _vegitiationLevel = Math.Clamp(value, 0, 1);
+            init => _vegitiationLevel = Math.Clamp(value, 0, 1);
         }
     }
 }

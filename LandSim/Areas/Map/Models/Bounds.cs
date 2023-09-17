@@ -4,13 +4,13 @@ namespace LandSim.Areas.Map.Models
 {
     public class Bounds
     {
-        public int MinX { get; set; }
+        public int MinX { get; init; }
 
-        public int MaxX { get; set; }
+        public int MaxX { get; init; }
 
-        public int MinY { get; set; }
+        public int MinY { get; init; }
 
-        public int MaxY { get; set; }
+        public int MaxY { get; init; }
 
         public int SizeX => MaxX - MinX + 1;
 
@@ -18,17 +18,26 @@ namespace LandSim.Areas.Map.Models
 
         public static Bounds FromLocations<T>(T[] locations) where T : ILocation
         {
-            var bounds = new Bounds();
+            var minX = int.MaxValue;
+            var maxX = int.MinValue;
+            var minY = int.MaxValue;
+            var maxY = int.MinValue;
 
             foreach(var location in locations)
             {
-                if (location.XCoord < bounds.MinX) bounds.MinX = location.XCoord;
-                if (location.XCoord > bounds.MaxX) bounds.MaxX = location.XCoord;
-                if (location.YCoord < bounds.MinY) bounds.MinY = location.YCoord;
-                if (location.YCoord > bounds.MaxY) bounds.MaxY = location.YCoord;
+                if (location.XCoord < minX) minX = location.XCoord;
+                if (location.XCoord > maxX) maxX = location.XCoord;
+                if (location.YCoord < minY) minY = location.YCoord;
+                if (location.YCoord > maxY) maxY = location.YCoord;
             }
 
-            return bounds;
+            return new Bounds
+            {
+                MaxX = maxX,
+                MinX = minX,
+                MaxY = maxY,
+                MinY = minY
+            };
         }
     }
 }

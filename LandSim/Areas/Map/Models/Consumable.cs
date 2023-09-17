@@ -2,11 +2,11 @@
 {
     public record Consumable : ILocation
     {
-        public int XCoord { get; set; }
+        public int XCoord { get; init; }
 
-        public int YCoord { get; set; }
+        public int YCoord { get; init; }
 
-        public int ConsumableId { get; set; }
+        public int ConsumableId { get; init; }
 
     }
 }

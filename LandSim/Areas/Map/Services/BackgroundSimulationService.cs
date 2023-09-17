@@ -50,7 +50,11 @@ namespace LandSim.Areas.Map.Services
                     await mapRepository.SaveSimulationUpdates(simulationUpdates);
                     _logger.LogInformation($"Saved Terrain - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
                     
-                    _eventAggregator.Publish(new MapUpdateEvent { TerrainTiles = updatedWorldData.TerrainTiles, Consumables = updatedWorldData.Consumables });
+                    _eventAggregator.Publish(new MapUpdateEvent { 
+                        TerrainTiles = updatedWorldData.TerrainTiles, 
+                        Consumables = updatedWorldData.Consumables, 
+                        Agents = updatedWorldData.Agents
+                    });
 
                     await Task.Delay(500, stoppingToken);
                 }

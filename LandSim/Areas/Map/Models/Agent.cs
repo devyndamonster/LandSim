@@ -2,20 +2,20 @@
 {
     public record Agent : ILocation
     {
-        public int AgentId { get; set; }
+        public int AgentId { get; init; }
         
-        public int XCoord { get; set; }
+        public int XCoord { get; init; }
         
-        public int YCoord { get; set; }
+        public int YCoord { get; init; }
 
         /// <summary>
         /// Hunger amount, where low amounts are hungry and high amounts are full.
         /// </summary>
-        public float Hunger { get; set; } = 1f;
+        public float Hunger { get; init; } = 1f;
 
         /// <summary>
         /// Thirst amount, where low amounts are thirsty and high amounts are hydrated.
         /// </summary>
-        public float Thirst { get; set; } = 1f;
+        public float Thirst { get; init; } = 1f;
     }
 }

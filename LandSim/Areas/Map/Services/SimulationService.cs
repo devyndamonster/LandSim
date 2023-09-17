@@ -13,6 +13,7 @@ namespace LandSim.Areas.Map.Services
 
             var agentActions = actions.ToDictionary(action => action.AgentId);
 
+            //Agent actions
             var updatedAgentGrid = currentWorldData.Agents
                 .Select(agent =>
                 {
@@ -74,6 +75,28 @@ namespace LandSim.Areas.Map.Services
                 .OfType<Agent>()
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
 
+            //New Agents
+            updatedAgentGrid = updatedAgentGrid.Map(agent =>
+            {
+                if(agent.Value is null)
+                {
+                    var tile = currentWorldData.TerrainTiles[agent.x, agent.y];
+
+                    if (tile?.TerrainType == TerrainType.Sand && random.NextDouble() >= 0.9999)
+                    {
+                        return new Agent
+                        {
+                            XCoord = tile.XCoord,
+                            YCoord = tile.YCoord,
+                            Hunger = 1,
+                            Thirst = 1,
+                        };
+                    }
+                }
+
+                return agent.Value;
+            });
+
             var updatedTilesGrid = currentWorldData.TerrainTiles.Map(tile =>
             {
                 var surroundingTiles = currentWorldData.TerrainTiles.GetImmediateNeighbors(tile.x, tile.y);
@@ -93,7 +116,7 @@ namespace LandSim.Areas.Map.Services
                 {
                     var c when c.Value is null 
                         && terrainTile?.VegetationLevel > 0.95 
-                        && random.NextDouble() >= 0.99 => 
+                        && random.NextDouble() >= 0.999 => 
                             new Consumable { XCoord = terrainTile.XCoord, YCoord = terrainTile.YCoord },
                     var c => c.Value
                 };
@@ -104,15 +127,12 @@ namespace LandSim.Areas.Map.Services
 
         public SimulationUpdates GetSimulationUpdates(WorldData currentWorld, WorldData updatedWorld)
         {
-            var tileUpdates = updatedWorld.TerrainTiles.Updates(currentWorld.TerrainTiles);
-            var consumableAdditions = updatedWorld.Consumables.Additions(currentWorld.Consumables);
-            var agentUpdates = updatedWorld.Agents.Updates(currentWorld.Agents);
-
             return new SimulationUpdates
             {
-                UpdatedTiles = tileUpdates.ToList(),
-                AddedConsumables = consumableAdditions.ToList(),
-                AgentUpdates = agentUpdates.ToList(),
+                UpdatedTiles = updatedWorld.TerrainTiles.Updates(currentWorld.TerrainTiles).ToList(),
+                AddedConsumables = updatedWorld.Consumables.Additions(currentWorld.Consumables).ToList(),
+                AgentUpdates = updatedWorld.Agents.Updates(currentWorld.Agents).ToList(),
+                AddedAgents = updatedWorld.Agents.Additions(currentWorld.Agents).ToList(),
             };
         }
         
