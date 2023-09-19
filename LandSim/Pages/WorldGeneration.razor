@@ -6,23 +6,25 @@
 
 <PageTitle>World Generation</PageTitle>
 
-<div style="display: flex; flex-direction: row; height:100%;">
-
-    <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" OnGeneratedTerrainApplied="SaveGeneratedTerrain" />
-
-    <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
-        <div style="height:100%; width:100%; position:relative;">
-            <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
-                <MapGrid Terrain="Terrain" />
+<GridRow Style="height:100%">
+    <GridCol Style="padding: 5px; flex: none">
+        <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" OnGeneratedTerrainApplied="SaveGeneratedTerrain" />
+    </GridCol>
+    <GridCol Flex=@("auto")>
+        <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
+            <div style="height:100%; width:100%; position:relative;">
+                <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
+                    <MapGrid Terrain="Terrain" />
+                </div>
             </div>
         </div>
-        
-    </div>
-</div>
-
+    </GridCol>
+</GridRow>
 
 
 @code {
+
+    //TODO <GridCol Flex=@("none")  Style="padding: 5px;"> has a bug! Make a PR to fix this
 
     [Inject]
     public MapRepository MapRepository { get; set; }

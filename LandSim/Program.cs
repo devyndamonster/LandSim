@@ -16,12 +16,17 @@ builder.Services.AddSingleton<SimulationService>();
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAntDesign();
 
 var app = builder.Build();
 
 app.UseSwagger();
 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyBlazor v1"));
-app.UseExceptionHandler("/Error");
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+}
 
 app.UseStaticFiles();
 app.UseRouting();

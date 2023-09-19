@@ -2,51 +2,13 @@
 @using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Map.Services;
 
-<div style="display: flex; flex-direction:column; padding:10px;">
-    <h3>Settings</h3>
+<Form Model="@Settings" Layout="@FormLayout.Vertical">
 
-    <label> Seed: </label>
-    <input type="text" @bind="Settings.Seed" />
+    <FormItem Label="Seed">
+        <Input @bind-Value="context.Seed"/>
+    </FormItem>
 
-    <label> Width: </label>
-    <input type="number" @bind="Settings.Width" />
-
-    <label> Height: </label>
-    <input type="number" @bind="Settings.Height" />
-
-    <label> Frequency: </label>
-    <input type="number" step="0.001" @bind="Settings.Frequency" />
-
-    <div style="background-color:lightgrey; padding:5px;">
-        <button @onclick="() => Settings.TerrainSelectors.Add(new TerrainSelector())">Add</button>
-        @foreach (var terrainSelector in Settings.TerrainSelectors)
-        {
-            <div style="border:2px solid @(TerrainService.GetColorForTerrain(terrainSelector.TerrainType).GetCssColor()); padding:5px; display:flex; flex-direction:column; margin-top:5px;">
-                <label> Min Value: </label>
-                <input type="number" step="0.01" @bind="terrainSelector.MinValue" />
-
-                <label> Max Value: </label>
-                <input type="number" step="0.01" @bind="terrainSelector.MaxValue" />
-
-                <label> Terrain Type: </label>
-                <select type="number" step="0.1" @bind="terrainSelector.TerrainType">
-                    @foreach(var terrainType in Enum.GetValues<TerrainType>())
-                    {
-                        <option value="@terrainType">@terrainType.ToString()</option>
-                    }
-                </select>
-
-
-                <button @onclick="() => Settings.TerrainSelectors.Remove(terrainSelector)">Remove</button>
-            </div>
-        }
-    </div>
-    
-    <button @onclick="UpdateSettings">Update Settings</button>
-
-    <button @onclick="ApplyGeneratedTerrain">Apply Generated Terrain</button>
-</div>
-
+</Form>
 
 @code {
 

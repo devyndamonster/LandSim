@@ -1,13 +1,18 @@
 ﻿@inherits LayoutComponentBase
+@using AntDesign
 
 <PageTitle>LandSim</PageTitle>
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
+<Layout Style="height: 100vh;">
+    <Sider>
+        <Menu Theme="MenuTheme.Dark">
+            <MenuItem Title="Home" Icon="home" RouterLink="" RouterMatch="NavLinkMatch.All"/>
+            <MenuItem Title="API Docs" Icon="unordered-list" RouterLink="swaggerDocs" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="Generation" Icon="unordered-list" RouterLink="generation" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="World" Icon="unordered-list" RouterLink="world" RouterMatch="NavLinkMatch.All" />
+        </Menu>
+    </Sider>
+    <Layout>
         @Body
-    </main>
-</div>
+    </Layout>
+</Layout>
