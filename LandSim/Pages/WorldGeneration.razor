@@ -6,8 +6,8 @@
 
 <PageTitle>World Generation</PageTitle>
 
-<GridRow Style="height:100%">
-    <GridCol Style="padding: 5px; flex: none">
+<GridRow Style="height:100%;">
+    <GridCol Style="padding: 5px; flex: none; height: 100%; overflow:scroll">
         <GenerationSettingsMenu Settings="Settings" OnSettingsUpdated="UpdateSettings" OnGeneratedTerrainApplied="SaveGeneratedTerrain" />
     </GridCol>
     <GridCol Flex=@("auto")>

@@ -1,12 +1,37 @@
 ﻿@using LandSim.Areas.Map.Enums;
 @using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Map.Services;
+@using AntDesign;
 
 <Form Model="@Settings" Layout="@FormLayout.Vertical">
 
     <FormItem Label="Seed">
-        <Input @bind-Value="context.Seed"/>
+        <Input @bind-Value="context.Seed" />
     </FormItem>
+    <FormItem Label="Width">
+        <AntDesign.InputNumber @bind-Value="context.Width" Min="1" Max="1000"/>
+    </FormItem>
+    <FormItem Label="Height">
+        <AntDesign.InputNumber @bind-Value="context.Height" Min="1" Max="1000" />
+    </FormItem>
+    <FormItem Label="Frequency">
+        <AntDesign.InputNumber @bind-Value="context.Frequency"/>
+    </FormItem>
+
+    @foreach(var terrainSelector in context.TerrainSelectors)
+    {
+        <Card Bordered="true">
+            <FormItem Label="Max Value">
+                <AntDesign.InputNumber @bind-Value="terrainSelector.MaxValue" />
+            </FormItem>
+            <FormItem Label="Min Value">
+                <AntDesign.InputNumber @bind-Value="terrainSelector.MinValue" />
+            </FormItem>
+            <FormItem Label="Terrain Type">
+                <EnumSelect TEnum="TerrainType"/>
+            </FormItem>
+        </Card>
+    }
 
 </Form>
 
