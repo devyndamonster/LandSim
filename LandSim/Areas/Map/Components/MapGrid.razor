@@ -3,7 +3,7 @@
 @using LandSim.Areas.Map.Services;
 @using LandSim.Extensions;
 
-<div class="map-grid-container" style="grid-template-columns: repeat(@(Terrain.GetLength(0)), 1fr);">
+<div class="map-grid-container" style="grid-template-columns: repeat(@(Terrain.GetLength(1)), 1fr);">
 
     @for (int x = 0; x < Terrain.GetLength(0); x++)
     {

@@ -27,12 +27,12 @@ namespace LandSim.Areas.Map.Services
 
         public TerrainTile[,] GenerateTerrain(GenerationSettings settings)
         {
-            var terrain = new TerrainTile[settings.Width, settings.Height];
+            var terrain = new TerrainTile[settings.Height, settings.Width];
             var permutations = GetPermutations(settings);
 
-            for (var x = 0; x < settings.Width; x++)
+            for (var x = 0; x < settings.Height; x++)
             {
-                for (var y = 0; y < settings.Height; y++)
+                for (var y = 0; y < settings.Width; y++)
                 {
                     var perlinNoiseValue = PerlinNoise(settings.Frequency * x, settings.Frequency * y, permutations);
 

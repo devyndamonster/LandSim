@@ -47,6 +47,9 @@
         Settings = settings;
         Terrain = TerrainService.GenerateTerrain(Settings);
 
+        var width = Terrain.GetLength(0);
+        var height = Terrain.GetLength(1);
+
         MapRepository.SaveSettings(settings);
         StateHasChanged();
     }

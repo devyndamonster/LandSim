@@ -18,20 +18,34 @@
         <AntDesign.InputNumber @bind-Value="context.Frequency"/>
     </FormItem>
 
-    @foreach(var terrainSelector in context.TerrainSelectors)
-    {
-        <Card Bordered="true">
-            <FormItem Label="Max Value">
-                <AntDesign.InputNumber @bind-Value="terrainSelector.MaxValue" />
-            </FormItem>
-            <FormItem Label="Min Value">
-                <AntDesign.InputNumber @bind-Value="terrainSelector.MinValue" />
-            </FormItem>
-            <FormItem Label="Terrain Type">
-                <EnumSelect TEnum="TerrainType"/>
-            </FormItem>
-        </Card>
-    }
+    <FormItem Label="Terrain Selectors">
+        @foreach(var terrainSelector in context.TerrainSelectors)
+        {
+            <Card Bordered="true">
+                <GridRow Gutter="8">
+                    <GridCol Flex=@("auto")>
+                        <FormItem>
+                            <EnumSelect TEnum="TerrainType" @bind-Value="terrainSelector.TerrainType"/>
+                        </FormItem>
+                    </GridCol>
+                    <GridCol Flex=@("none")>
+                        <Button Icon="plus" OnClick="() => context.TerrainSelectors.Insert(context.TerrainSelectors.IndexOf(terrainSelector), new TerrainSelector())" />
+                    </GridCol>
+                    <GridCol Flex=@("none")>
+                        <Button Icon="close" OnClick="() => context.TerrainSelectors.Remove(terrainSelector)" />
+                    </GridCol>
+                    <GridCol Span="24">
+                        <FormItem Label="Range">
+                            <Slider TValue="(double Min, double Max)" Min="0" Max="1" @bind-Value="terrainSelector.Range" Step="0.01" />
+                        </FormItem>
+                    </GridCol>
+                </GridRow>
+            </Card>
+        }
+    </FormItem>
+
+    <Button OnClick="UpdateSettings">Update Settings</Button>
+    <Button OnClick="ApplyGeneratedTerrain">ApplyToTerrain</Button>
 
 </Form>
 
