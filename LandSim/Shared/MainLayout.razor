@@ -4,12 +4,13 @@
 <PageTitle>LandSim</PageTitle>
 
 <Layout Style="height: 100vh;">
-    <Sider>
-        <Menu Theme="MenuTheme.Dark">
+    <Sider Theme="SiderTheme.Light">
+        <Menu Theme="MenuTheme.Light">
             <MenuItem Title="Home" Icon="home" RouterLink="" RouterMatch="NavLinkMatch.All"/>
-            <MenuItem Title="API Docs" Icon="unordered-list" RouterLink="swaggerDocs" RouterMatch="NavLinkMatch.All" />
-            <MenuItem Title="Generation" Icon="unordered-list" RouterLink="generation" RouterMatch="NavLinkMatch.All" />
-            <MenuItem Title="World" Icon="unordered-list" RouterLink="world" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="API Docs" Icon="api" RouterLink="swaggerDocs" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="Agent Management" Icon="user" RouterLink="agents/owner-management" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="Generation" Icon="build" RouterLink="generation" RouterMatch="NavLinkMatch.All" />
+            <MenuItem Title="World" Icon="compass" RouterLink="world" RouterMatch="NavLinkMatch.All" />
         </Menu>
     </Sider>
     <Layout>
