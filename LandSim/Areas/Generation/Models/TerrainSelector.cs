@@ -1,7 +1,7 @@
 ﻿using LandSim.Areas.Map.Enums;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace LandSim.Areas.Map.Models
+namespace LandSim.Areas.Generation.Models
 {
     public class TerrainSelector
     {

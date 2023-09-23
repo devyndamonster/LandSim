@@ -1,4 +1,4 @@
-﻿namespace LandSim.Areas.Map.Models
+﻿namespace LandSim.Areas.Agents.Models
 {
     public class AgentOwner
     {

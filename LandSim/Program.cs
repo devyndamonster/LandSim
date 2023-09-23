@@ -1,5 +1,8 @@
-using LandSim.Areas.Map;
+using LandSim.Areas.Generation.Services;
 using LandSim.Areas.Map.Services;
+using LandSim.Areas.Simulation;
+using LandSim.Areas.Simulation.Services;
+using LandSim.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,10 +11,11 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContext<MapContext>(ServiceLifetime.Transient);
 builder.Services.AddTransient<MapRepository>();
 builder.Services.AddSingleton<TerrainService>();
+builder.Services.AddSingleton<TerrainGenerationService>();
 builder.Services.AddHostedService<BackgroundSimulationService>();
+builder.Services.AddSingleton<SimulationService>();
 builder.Services.AddSingleton<SimulationEventAggregator>();
 builder.Services.AddSingleton<DatabaseConnection>();
-builder.Services.AddSingleton<SimulationService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

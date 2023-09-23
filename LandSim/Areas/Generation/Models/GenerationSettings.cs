@@ -1,4 +1,4 @@
-﻿namespace LandSim.Areas.Map.Models
+﻿namespace LandSim.Areas.Generation.Models
 {
     public class GenerationSettings
     {

@@ -1,9 +1,10 @@
-﻿using LandSim.Areas.Map.Enums;
+﻿using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Map.Enums;
 using LandSim.Areas.Map.Models;
+using LandSim.Areas.Simulation.Models;
 using LandSim.Extensions;
-using System;
 
-namespace LandSim.Areas.Map.Services
+namespace LandSim.Areas.Simulation.Services
 {
     public class SimulationService
     {
@@ -17,14 +18,14 @@ namespace LandSim.Areas.Map.Services
             var updatedAgentGrid = currentWorldData.Agents
                 .Select(agent =>
                 {
-                    if(agent.Value is null)
+                    if (agent.Value is null)
                     {
                         return null;
                     }
 
                     agentActions.TryGetValue(agent.Value.AgentId, out var action);
 
-                    if(action is null)
+                    if (action is null)
                     {
                         return agent.Value;
                     }
@@ -54,10 +55,10 @@ namespace LandSim.Areas.Map.Services
                             agent: currentWorldData.Agents[agent.x, agent.y]),
                     };
 
-                    if(destination.tile is not null 
-                        && !agent.Value.IsAt(destination.tile) 
-                        && destination.tile.TerrainType != TerrainType.Water 
-                        && destination.consumable is null 
+                    if (destination.tile is not null
+                        && !agent.Value.IsAt(destination.tile)
+                        && destination.tile.TerrainType != TerrainType.Water
+                        && destination.consumable is null
                         && destination.agent is null)
                     {
                         return new Agent
@@ -78,7 +79,7 @@ namespace LandSim.Areas.Map.Services
             //New Agents
             updatedAgentGrid = updatedAgentGrid.Map(agent =>
             {
-                if(agent.Value is null)
+                if (agent.Value is null)
                 {
                     var tile = currentWorldData.TerrainTiles[agent.x, agent.y];
 
@@ -114,15 +115,15 @@ namespace LandSim.Areas.Map.Services
 
                 return consumable switch
                 {
-                    var c when c.Value is null 
-                        && terrainTile?.VegetationLevel > 0.95 
-                        && random.NextDouble() >= 0.999 => 
+                    var c when c.Value is null
+                        && terrainTile?.VegetationLevel > 0.95
+                        && random.NextDouble() >= 0.999 =>
                             new Consumable { XCoord = terrainTile.XCoord, YCoord = terrainTile.YCoord },
                     var c => c.Value
                 };
             });
 
-            return new WorldData (currentWorldData.Bounds, updatedTilesGrid!, updatedConsumablesGrid!, updatedAgentGrid!);
+            return new WorldData(currentWorldData.Bounds, updatedTilesGrid!, updatedConsumablesGrid!, updatedAgentGrid!);
         }
 
         public SimulationUpdates GetSimulationUpdates(WorldData currentWorld, WorldData updatedWorld)
@@ -135,7 +136,7 @@ namespace LandSim.Areas.Map.Services
                 AddedAgents = updatedWorld.Agents.Additions(currentWorld.Agents).ToList(),
             };
         }
-        
+
         private TerrainTile GetVegetationUpdate(TerrainTile tile, IEnumerable<TerrainTile> surroundingTiles)
         {
             var random = new Random();

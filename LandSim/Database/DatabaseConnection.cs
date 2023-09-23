@@ -1,7 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System.Data;
 
-namespace LandSim.Areas.Map
+namespace LandSim.Database
 {
     public class DatabaseConnection
     {

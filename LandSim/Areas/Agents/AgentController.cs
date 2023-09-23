@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace LandSim.Areas.Map
+namespace LandSim.Areas.Agents
 {
     [ApiController]
     [Route("agents")]

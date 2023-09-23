@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace LandSim.Areas.Map
+namespace LandSim.Areas.Simulation
 {
     public class SimulationEventAggregator
     {
@@ -23,7 +23,7 @@ namespace LandSim.Areas.Map
             {
                 _handlers[typeof(TEvent)] = new List<object>();
             }
-            
+
             _handlers[typeof(TEvent)].Add(handler);
         }
 

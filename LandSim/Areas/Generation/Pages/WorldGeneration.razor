@@ -1,8 +1,10 @@
 ﻿@page "/generation"
-@using LandSim.Areas.Map;
+@using LandSim.Areas.Generation.Components
+@using LandSim.Areas.Generation.Models;
+@using LandSim.Areas.Generation.Services;
 @using LandSim.Areas.Map.Components
 @using LandSim.Areas.Map.Models;
-@using LandSim.Areas.Map.Services;
+@using LandSim.Database;
 
 <PageTitle>World Generation</PageTitle>
 
@@ -30,7 +32,7 @@
     public MapRepository MapRepository { get; set; }
 
     [Inject]
-    public TerrainService TerrainService { get; set; }
+    public TerrainGenerationService TerrainService { get; set; }
 
     private TerrainTile[,] Terrain { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using LandSim.Extensions;
+﻿using LandSim.Areas.Agents.Models;
+using LandSim.Extensions;
 
 namespace LandSim.Areas.Map.Models
 {

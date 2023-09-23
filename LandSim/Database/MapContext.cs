@@ -1,7 +1,9 @@
-﻿using LandSim.Areas.Map.Models;
+﻿using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Generation.Models;
+using LandSim.Areas.Map.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace LandSim.Areas.Map
+namespace LandSim.Database
 {
     public class MapContext : DbContext
     {

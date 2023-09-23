@@ -1,4 +1,7 @@
-﻿namespace LandSim.Areas.Map.Models
+﻿using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Map.Models;
+
+namespace LandSim.Areas.Simulation.Models
 {
     public class SimulationUpdates
     {

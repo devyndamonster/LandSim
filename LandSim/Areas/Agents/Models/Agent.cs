@@ -1,13 +1,15 @@
-﻿namespace LandSim.Areas.Map.Models
+﻿using LandSim.Areas.Map.Models;
+
+namespace LandSim.Areas.Agents.Models
 {
     public record Agent : ILocation
     {
         public int AgentId { get; init; }
 
         public int AgentOwnerId { get; init; }
-        
+
         public int XCoord { get; init; }
-        
+
         public int YCoord { get; init; }
 
         /// <summary>
