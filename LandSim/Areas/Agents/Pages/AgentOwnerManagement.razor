@@ -1,7 +1,57 @@
 ﻿@page "/agents/owner-management"
+@using LandSim.Areas.Agents.Models;
+@using LandSim.Database;
 
-<h3>AgentOwnerManagement</h3>
+<Form Model="@form" Layout="@FormLayout.Vertical">
+    @foreach (var owner in context.Owners)
+    {
+        <Card>
+            <FormItem Label="Postback Url">
+               <Input @bind-Value="owner.PostbackUrl" />
+            </FormItem>
+            <Button Icon="close" OnClick="() => DeleteOwner(owner)"/>
+        </Card>
+    }
+
+    <Button OnClick="AddOwner">Add Owner</Button>
+    <Button OnClick="SaveChanges">Save</Button>
+</Form>
 
 @code {
+
+    protected class FormModel
+    {
+        public List<AgentOwner> Owners { get; set; } = new List<AgentOwner>();
+    }
+
+    [Inject]
+    public MapRepository Repository { get; set; }
+
+    private FormModel form = new FormModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        form.Owners = await Repository.GetAgentOwners();
+    }
+
+    protected async Task AddOwner()
+    {
+        var owner = new AgentOwner();
+        owner.AgentOwnerId = await Repository.InsertAgentOwner(owner);
+        form.Owners.Add(owner);
+    }
+
+    protected async Task SaveChanges(){
+        foreach(var owner in form.Owners)
+        {
+            await Repository.UpdateAgentOwner(owner);
+        }
+    }
+
+    protected async Task DeleteOwner(AgentOwner owner)
+    {
+        await Repository.DeleteAgentOwner(owner);
+        form.Owners.Remove(owner);
+    }
 
 }

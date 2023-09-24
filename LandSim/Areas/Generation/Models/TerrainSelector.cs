@@ -17,7 +17,7 @@ namespace LandSim.Areas.Generation.Models
         public (double Min, double Max) Range
         {
             get { return (MinValue, MaxValue); }
-            set { MaxValue = (float)value.Min; MinValue = (float)value.Max; }
+            set { MinValue = (float)value.Min; MaxValue = (float)value.Max; }
         }
 
         public bool DoesApply(float value)

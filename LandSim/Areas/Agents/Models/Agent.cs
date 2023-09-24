@@ -1,8 +1,9 @@
 ﻿using LandSim.Areas.Map.Models;
+using LandSim.Shared;
 
 namespace LandSim.Areas.Agents.Models
 {
-    public record Agent : ILocation
+    public record Agent : BaseRecord, ILocation
     {
         public int AgentId { get; init; }
 

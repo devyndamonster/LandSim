@@ -106,8 +106,8 @@ namespace LandSim.Database
 
             sql =
             """
-                INSERT INTO Agents (XCoord, YCoord, Hunger, Thirst)
-                VALUES (@XCoord, @YCoord, @Hunger, @Thirst)
+                INSERT INTO Agents (XCoord, YCoord, AgentOwnerId, Hunger, Thirst)
+                VALUES (@XCoord, @YCoord, @AgentOwnerId, @Hunger, @Thirst)
             """;
 
             foreach (var agent in updates.AddedAgents)
@@ -153,6 +153,7 @@ namespace LandSim.Database
                     AgentId,
                     XCoord,
                     YCoord,
+                    AgentOwnerId,
                     Hunger,
                     Thirst
                 FROM Agents
@@ -175,6 +176,63 @@ namespace LandSim.Database
             """;
 
             await connection.ExecuteAsync(sql, action);
+        }
+
+        public async Task<List<AgentOwner>> GetAgentOwners()
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                SELECT
+                    AgentOwnerId,
+                    Key,
+                    PostbackUrl
+                FROM AgentOwner
+            """;
+
+            return (await connection.QueryAsync<AgentOwner>(sql)).ToList();
+        }
+
+        public async Task<int> InsertAgentOwner(AgentOwner owner)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                INSERT INTO AgentOwner (Key, PostbackUrl)
+                VALUES (@Key, @PostbackUrl)
+                RETURNING AgentOwnerId
+            """;
+
+            return await connection.QuerySingleAsync<int>(sql, owner);
+        }
+
+        public async Task DeleteAgentOwner(AgentOwner owner)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                DELETE FROM AgentOwner
+                WHERE AgentOwnerId = @AgentOwnerId
+            """;
+
+            await connection.ExecuteAsync(sql, owner);
+        }
+
+        public async Task UpdateAgentOwner(AgentOwner owner)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                UPDATE AgentOwner
+                SET Key = @Key, PostbackUrl = @PostbackUrl
+                WHERE AgentOwnerId = @AgentOwnerId
+            """;
+
+            await connection.ExecuteAsync(sql, owner);
         }
     }
 }

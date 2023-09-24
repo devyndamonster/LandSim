@@ -1,4 +1,5 @@
-﻿using LandSim.Areas.Agents.Models;
+﻿using LandSim.Areas.Agents;
+using LandSim.Areas.Agents.Models;
 using LandSim.Areas.Simulation.Models;
 using LandSim.Database;
 using LandSim.Extensions;
@@ -12,17 +13,20 @@ namespace LandSim.Areas.Simulation.Services
         private readonly IServiceScopeFactory _services;
         private readonly SimulationEventAggregator _eventAggregator;
         private readonly SimulationService _simulationService;
+        private readonly AgentUpdateService _agentUpdateService;
 
         public BackgroundSimulationService(
             ILogger<BackgroundSimulationService> logger,
             IServiceScopeFactory services,
             SimulationEventAggregator eventAggregator,
-            SimulationService simulationService)
+            SimulationService simulationService,
+            AgentUpdateService agentUpdateService)
         {
             _logger = logger;
             _services = services;
             _eventAggregator = eventAggregator;
             _simulationService = simulationService;
+            _agentUpdateService = agentUpdateService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -38,9 +42,10 @@ namespace LandSim.Areas.Simulation.Services
                     stopWatch.Restart();
 
                     var currentWorldData = await mapRepository.GetWorldData();
+                    var owners = await mapRepository.GetAgentOwners();
                     _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, new AgentAction[0]);
+                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, owners, new AgentAction[0]);
                     _logger.LogInformation($"Got Updated World - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
                     var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData, updatedWorldData);
@@ -49,12 +54,16 @@ namespace LandSim.Areas.Simulation.Services
                     await mapRepository.SaveSimulationUpdates(simulationUpdates);
                     _logger.LogInformation($"Saved Terrain - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    _eventAggregator.Publish(new MapUpdateEvent
+                    var updateEvent = new MapUpdateEvent
                     {
                         TerrainTiles = updatedWorldData.TerrainTiles,
                         Consumables = updatedWorldData.Consumables,
                         Agents = updatedWorldData.Agents
-                    });
+                    };
+
+                    _eventAggregator.Publish(updateEvent);
+                    await _agentUpdateService.SendSimulationUpdate(updateEvent);
+                    _logger.LogInformation($"Published Updates - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
                     await Task.Delay(500, stoppingToken);
                 }

@@ -62,22 +62,18 @@ namespace LandSim.Extensions
             return neighbors.Where(n => n != null).Select(n => n!);
         }
 
-        public static IEnumerable<T> Flatten<T>(this T?[,] map)
+        public static IEnumerable<T> GetElementsWithinRange<T>(this T?[,] array, int x, int y, int range)
         {
-            var flattened = new List<T>();
-
-            for (int row = 0; row < map.GetLength(0); row++)
+            for (int row = y - range; row <= y + range; row++)
             {
-                for (int col = 0; col < map.GetLength(1); col++)
+                for (int col = x - range; col <= x + range; col++)
                 {
-                    if (map[row, col] != null)
+                    if (array.IsInArray(col, row) && array[col, row] is not null)
                     {
-                        flattened.Add(map[row, col]!);
+                        yield return array[col, row]!;
                     }
                 }
             }
-
-            return flattened;
         }
         
         public static IEnumerable<TResult> Select<T, TResult>(this T?[,] map, Func<(int x, int y, T? Value), TResult> func)

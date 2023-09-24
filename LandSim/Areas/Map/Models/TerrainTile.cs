@@ -1,8 +1,9 @@
 ﻿using LandSim.Areas.Map.Enums;
+using LandSim.Shared;
 
 namespace LandSim.Areas.Map.Models
 {
-    public record TerrainTile : ILocation
+    public record TerrainTile : BaseRecord, ILocation
     {
         public int TerrainTileId { get; init; }
 

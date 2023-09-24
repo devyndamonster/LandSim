@@ -1,3 +1,4 @@
+using LandSim.Areas.Agents.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Agent.Boar.Controllers
@@ -14,7 +15,7 @@ namespace Agent.Boar.Controllers
         }
 
         [HttpPost("map")]
-        public async Task<IActionResult> PostMapUpdate()
+        public async Task<IActionResult> PostMapUpdate([FromBody] IEnumerable<AgentContext> agents)
         {
             return Ok();
         }

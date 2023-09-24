@@ -8,7 +8,7 @@ namespace LandSim.Areas.Simulation.Services
 {
     public class SimulationService
     {
-        public WorldData GetUpdatedWorldData(WorldData currentWorldData, AgentAction[] actions)
+        public WorldData GetUpdatedWorldData(WorldData currentWorldData, IEnumerable<AgentOwner> agentOwners, AgentAction[] actions)
         {
             var random = new Random();
 
@@ -30,7 +30,6 @@ namespace LandSim.Areas.Simulation.Services
                         return agent.Value;
                     }
 
-                    //TODO: Probably want to just combine world data grids at this point
                     var destination = action.ActionType switch
                     {
                         AgentActionType.MoveLeft => (
@@ -89,6 +88,7 @@ namespace LandSim.Areas.Simulation.Services
                         {
                             XCoord = tile.XCoord,
                             YCoord = tile.YCoord,
+                            AgentOwnerId = agentOwners.Shuffle().First().AgentOwnerId,
                             Hunger = 1,
                             Thirst = 1,
                         };
