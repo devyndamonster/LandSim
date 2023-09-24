@@ -60,13 +60,10 @@ namespace LandSim.Areas.Simulation.Services
                         && destination.consumable is null
                         && destination.agent is null)
                     {
-                        return new Agent
+                        return agent.Value with
                         {
-                            AgentId = agent.Value.AgentId,
                             XCoord = destination.tile.XCoord,
                             YCoord = destination.tile.YCoord,
-                            Hunger = agent.Value.Hunger,
-                            Thirst = agent.Value.Thirst,
                         };
                     }
 

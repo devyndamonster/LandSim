@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using LandSim.Areas.Agents.Models;
+using LandSim.Database;
+using Microsoft.AspNetCore.Mvc;
 
 namespace LandSim.Areas.Agents
 {
@@ -6,9 +8,21 @@ namespace LandSim.Areas.Agents
     [Route("agents")]
     public class AgentController : ControllerBase
     {
-        [HttpPost("actions")]
-        public async Task<IActionResult> SetAgentActions()
+        private readonly MapRepository _mapRepository;
+
+        public AgentController(MapRepository mapRepository)
         {
+            _mapRepository = mapRepository;
+        }
+
+        [HttpPost("actions")]
+        public async Task<IActionResult> SetAgentActions([FromBody] IEnumerable<AgentAction> actions)
+        {
+            foreach(var action in actions)
+            {
+                await _mapRepository.SetAgentAction(action);
+            }
+
             return Ok();
         }
     }

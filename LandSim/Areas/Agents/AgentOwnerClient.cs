@@ -11,9 +11,13 @@ namespace LandSim.Areas.Agents
             _client = client;
         }
 
-        public async Task SendSimulationUpdate(string postbackUrl, IEnumerable<AgentContext> agents)
+        public async Task SendSimulationUpdate(string agentUrl, IEnumerable<AgentContext> agents)
         {
-            await _client.PostAsJsonAsync(postbackUrl, agents);
+            await _client.PostAsJsonAsync(agentUrl, new AgentContextUpdate
+            { 
+                AgentContexts = agents, 
+                PostbackUrl = "http://localhost:39343/agents/actions"
+            });
         }
 
     }
