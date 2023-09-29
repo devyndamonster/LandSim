@@ -1,0 +1,75 @@
+﻿@page "/configuration"
+@using LandSim.Areas.Configuration.Models;
+@using LandSim.Database;
+
+
+
+<Form Model="@config" Layout="@FormLayout.Vertical">
+    <FormItem Label="Consumable Spawn Chance">
+        <AntDesign.InputNumber @bind-Value="context.ConsumableSpawnChance" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Consumable Hunger Increase">
+        <AntDesign.InputNumber @bind-Value="context.ConsumableHungerIncrease" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Consumable Vegitation Spawn Threshold">
+        <AntDesign.InputNumber @bind-Value="context.ConsumableVegitationSpawnThreshold" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Base Hunger Cost">
+        <AntDesign.InputNumber @bind-Value="context.BaseHungerCost" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Movement Hunger Cost">
+        <AntDesign.InputNumber @bind-Value="context.MovementHungerCost" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Climb Hunger Cost">
+        <AntDesign.InputNumber @bind-Value="context.ClimbHungerCost" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Agent Spawn Change">
+        <AntDesign.InputNumber @bind-Value="context.AgentSpawnChange" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Vegitation Movement Hunger Cost">
+        <AntDesign.InputNumber @bind-Value="context.VegitationMovementHungerCost" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Vegitation Spawn Chance">
+        <AntDesign.InputNumber @bind-Value="context.VegitationSpawnChance" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Vegitation Spread Chance">
+        <AntDesign.InputNumber @bind-Value="context.VegitationSpreadChance" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Vegitation Growth Rate">
+        <AntDesign.InputNumber @bind-Value="context.VegitationGrowthRate" Min="0" Max="1" />
+    </FormItem>
+    <FormItem Label="Vegitation Decrease From Movement">
+        <AntDesign.InputNumber @bind-Value="context.VegitationDecreaseFromMovement" Min="0" Max="1" />
+    </FormItem>
+
+    <Button OnClick="SaveSettings">Save Settings</Button>
+</Form>
+
+@code {
+
+    [Inject]
+    public MapRepository MapRepository { get; set; }
+
+    private SimulationConfig config { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var configs = await MapRepository.GetConfigs();
+
+        if (!configs.Any())
+        {
+            config = new SimulationConfig();
+            config.SimulationConfigId = await MapRepository.InsertConfig(config);
+        }
+        else
+        {
+            config = configs.First();
+        }
+    }
+
+    protected async Task SaveSettings()
+    {
+        await MapRepository.UpdateConfig(config);
+    }
+
+}

@@ -1,5 +1,6 @@
 ﻿using LandSim.Areas.Agents;
 using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Configuration.Models;
 using LandSim.Areas.Simulation.Models;
 using LandSim.Database;
 using LandSim.Extensions;
@@ -44,9 +45,10 @@ namespace LandSim.Areas.Simulation.Services
                     var currentWorldData = await mapRepository.GetWorldData();
                     var agentAction = await mapRepository.PopAgentActions();
                     var owners = await mapRepository.GetAgentOwners();
+                    var config = (await mapRepository.GetConfigs()).FirstOrDefault(new SimulationConfig());
                     _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, owners, agentAction);
+                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, config, owners, agentAction);
                     _logger.LogInformation($"Got Updated World - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
                     var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData, updatedWorldData);

@@ -1,4 +1,5 @@
 ﻿using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Configuration.Models;
 using LandSim.Areas.Generation.Models;
 using LandSim.Areas.Map.Models;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,8 @@ namespace LandSim.Database
         public DbSet<AgentAction> AgentActions { get; set; }
 
         public DbSet<AgentOwner> AgentOwner { get; set; }
+
+        public DbSet<SimulationConfig> SimulationConfigs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

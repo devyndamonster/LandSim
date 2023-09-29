@@ -1,4 +1,5 @@
 ﻿using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Configuration.Models;
 using LandSim.Areas.Map.Enums;
 using LandSim.Areas.Map.Models;
 using LandSim.Areas.Simulation.Models;
@@ -8,7 +9,7 @@ namespace LandSim.Areas.Simulation.Services
 {
     public class SimulationService
     {
-        public WorldData GetUpdatedWorldData(WorldData currentWorldData, IEnumerable<AgentOwner> agentOwners, IEnumerable<AgentAction> actions)
+        public WorldData GetUpdatedWorldData(WorldData currentWorldData, SimulationConfig config, IEnumerable<AgentOwner> agentOwners, IEnumerable<AgentAction> actions)
         {
             var random = new Random();
 
@@ -57,7 +58,7 @@ namespace LandSim.Areas.Simulation.Services
                         AgentActionType.Eat => () =>
                         {
                             var consumable = currentWorldData.Consumables[agent.x, agent.y];
-                            var hungerDelta = consumable is not null ? 0.1f : 0;
+                            var hungerDelta = consumable is not null ? config.ConsumableHungerIncrease : -config.BaseHungerCost;
 
                             return agent.Value with
                             {
@@ -76,12 +77,12 @@ namespace LandSim.Areas.Simulation.Services
                             {
                                 XCoord = destination.tile.XCoord,
                                 YCoord = destination.tile.YCoord,
-                                Hunger = agent.Value.Hunger - (0.02f + heightIncrease),
+                                Hunger = agent.Value.Hunger - (config.BaseHungerCost + config.MovementHungerCost + (heightIncrease * config.ClimbHungerCost)),
                             };
                         },
                         _ => () => agent.Value with
                         {
-                            Hunger = agent.Value.Hunger - 0.01f
+                            Hunger = agent.Value.Hunger - config.BaseHungerCost
                         }
                     };
 
@@ -99,7 +100,7 @@ namespace LandSim.Areas.Simulation.Services
                 {
                     var tile = currentWorldData.TerrainTiles[agent.x, agent.y];
 
-                    if (tile?.TerrainType == TerrainType.Sand && random.NextDouble() >= 0.9999)
+                    if (tile?.TerrainType == TerrainType.Sand && random.NextDouble() <= config.AgentSpawnChange)
                     {
                         return new Agent
                         {
@@ -121,7 +122,7 @@ namespace LandSim.Areas.Simulation.Services
 
                 return tile switch
                 {
-                    { Value.TerrainType: TerrainType.Soil } => GetVegetationUpdate(tile.Value, surroundingTiles),
+                    { Value.TerrainType: TerrainType.Soil } => GetVegetationUpdate(tile.Value, surroundingTiles, config),
                     _ => tile.Value
                 };
             });
@@ -136,8 +137,8 @@ namespace LandSim.Areas.Simulation.Services
                 {
                     var c when c.Value is not null && agentAction == AgentActionType.Eat => null,
                     var c when c.Value is null
-                        && terrainTile?.VegetationLevel > 0.95
-                        && random.NextDouble() >= 0.999 =>
+                        && terrainTile?.VegetationLevel > config.ConsumableVegitationSpawnThreshold
+                        && random.NextDouble() <= config.ConsumableSpawnChance =>
                             new Consumable { XCoord = terrainTile.XCoord, YCoord = terrainTile.YCoord },
                     var c => c.Value
                 };
@@ -186,16 +187,16 @@ namespace LandSim.Areas.Simulation.Services
             };
         }
 
-        private TerrainTile GetVegetationUpdate(TerrainTile tile, IEnumerable<TerrainTile> surroundingTiles)
+        private TerrainTile GetVegetationUpdate(TerrainTile tile, IEnumerable<TerrainTile> surroundingTiles, SimulationConfig config)
         {
             var random = new Random();
             var randomValue = random.NextDouble();
 
             var vegitationChange = randomValue switch
             {
-                var value when value > 0.9999 => 0.01f,
-                var value when value > 0.9 && surroundingTiles.Any(t => t.VegetationLevel > 0) => 0.01f,
-                _ when tile.VegetationLevel > 0 => 0.01f,
+                var rand when rand <= config.VegitationSpawnChance => config.VegitationGrowthRate,
+                var rand when rand <= config.VegitationSpreadChance && surroundingTiles.Any(t => t.VegetationLevel > 0) => config.VegitationGrowthRate,
+                _ when tile.VegetationLevel > 0 => config.VegitationGrowthRate,
                 _ => 0
             };
 

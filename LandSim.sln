@@ -5,7 +5,7 @@ VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LandSim", "LandSim\LandSim.csproj", "{3FDD7EDE-5A8F-4ECF-95FB-B4F9B88F5F7C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Agent.Boar", "Agents\Agent.Boar\Agent.Boar.csproj", "{734AC8B2-D605-4127-8A71-7D1963703B6D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Boar", "Agents\Agent.Boar\Agent.Boar.csproj", "{734AC8B2-D605-4127-8A71-7D1963703B6D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

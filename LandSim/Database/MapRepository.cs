@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Dapper;
 using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Configuration.Models;
 using LandSim.Areas.Generation.Models;
 using LandSim.Areas.Map.Models;
 using LandSim.Areas.Simulation.Models;
@@ -269,6 +270,85 @@ namespace LandSim.Database
             """;
 
             await connection.ExecuteAsync(sql, owner);
+        }
+
+        public async Task<IEnumerable<SimulationConfig>> GetConfigs()
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                SELECT
+                    *
+                FROM SimulationConfigs
+            """;
+
+            return await connection.QueryAsync<SimulationConfig>(sql);
+        }
+
+        public async Task UpdateConfig(SimulationConfig config)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                UPDATE SimulationConfigs
+                SET ConsumableSpawnChance = @ConsumableSpawnChance,
+                    ConsumableHungerIncrease = @ConsumableHungerIncrease,
+                    ConsumableVegitationSpawnThreshold = @ConsumableVegitationSpawnThreshold,
+                    BaseHungerCost = @BaseHungerCost,
+                    MovementHungerCost = @MovementHungerCost,
+                    ClimbHungerCost = @ClimbHungerCost,
+                    AgentSpawnChange = @AgentSpawnChange,
+                    VegitationMovementHungerCost = @VegitationMovementHungerCost,
+                    VegitationSpawnChance = @VegitationSpawnChance,
+                    VegitationSpreadChance = @VegitationSpreadChance,
+                    VegitationGrowthRate = @VegitationGrowthRate,
+                    VegitationDecreaseFromMovement = @VegitationDecreaseFromMovement
+                WHERE SimulationConfigId = @SimulationConfigId
+            """;
+
+            await connection.ExecuteAsync(sql, config);
+        }
+
+        public async Task<int> InsertConfig(SimulationConfig config)
+        {
+            var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                INSERT INTO SimulationConfigs (
+                    ConsumableSpawnChance,
+                    ConsumableHungerIncrease,
+                    ConsumableVegitationSpawnThreshold,
+                    BaseHungerCost,
+                    MovementHungerCost,
+                    ClimbHungerCost,
+                    AgentSpawnChange,
+                    VegitationMovementHungerCost,
+                    VegitationSpawnChance,
+                    VegitationSpreadChance,
+                    VegitationGrowthRate,
+                    VegitationDecreaseFromMovement
+                )
+                VALUES (
+                    @ConsumableSpawnChance,
+                    @ConsumableHungerIncrease,
+                    @ConsumableVegitationSpawnThreshold,
+                    @BaseHungerCost,
+                    @MovementHungerCost,
+                    @ClimbHungerCost,
+                    @AgentSpawnChange,
+                    @VegitationMovementHungerCost,
+                    @VegitationSpawnChance,
+                    @VegitationSpreadChance,
+                    @VegitationGrowthRate,
+                    @VegitationDecreaseFromMovement
+                )
+                RETURNING SimulationConfigId
+            """;
+
+            return await connection.QuerySingleAsync<int>(sql, config);
         }
     }
 }
