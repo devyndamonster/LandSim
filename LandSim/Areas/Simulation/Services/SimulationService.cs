@@ -8,13 +8,12 @@ namespace LandSim.Areas.Simulation.Services
 {
     public class SimulationService
     {
-        public WorldData GetUpdatedWorldData(WorldData currentWorldData, IEnumerable<AgentOwner> agentOwners, AgentAction[] actions)
+        public WorldData GetUpdatedWorldData(WorldData currentWorldData, IEnumerable<AgentOwner> agentOwners, IEnumerable<AgentAction> actions)
         {
             var random = new Random();
 
             var agentActions = actions.ToDictionary(action => action.AgentId);
 
-            //Agent actions
             var updatedAgentGrid = currentWorldData.Agents
                 .Select(agent =>
                 {
@@ -71,7 +70,7 @@ namespace LandSim.Areas.Simulation.Services
                 })
                 .OfType<Agent>()
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
-
+            
             //New Agents
             updatedAgentGrid = updatedAgentGrid.Map(agent =>
             {
@@ -125,12 +124,36 @@ namespace LandSim.Areas.Simulation.Services
 
         public SimulationUpdates GetSimulationUpdates(WorldData currentWorld, WorldData updatedWorld)
         {
+            var currentAgents = currentWorld.Agents
+                .Select(agent => agent.Value)
+                .OfType<Agent>()
+                .ToDictionary(agent => agent.AgentId);
+
+            var updatedAgents = updatedWorld.Agents
+                .Select(agent => agent.Value)
+                .OfType<Agent>()
+                .ToDictionary(agent => agent.AgentId);
+
+            var agentUpdates = updatedAgents.Values
+                .Where(agent =>
+                {
+                    if (currentAgents.TryGetValue(agent.AgentId, out var currentAgent))
+                    {
+                        return !agent.Equals(currentAgent);
+                    }
+
+                    return false;
+                });
+
+            var agentAdditions = updatedAgents.Values
+                .Where(agent => !currentAgents.ContainsKey(agent.AgentId));
+
             return new SimulationUpdates
             {
                 UpdatedTiles = updatedWorld.TerrainTiles.Updates(currentWorld.TerrainTiles).ToList(),
                 AddedConsumables = updatedWorld.Consumables.Additions(currentWorld.Consumables).ToList(),
-                AgentUpdates = updatedWorld.Agents.Updates(currentWorld.Agents).ToList(),
-                AddedAgents = updatedWorld.Agents.Additions(currentWorld.Agents).ToList(),
+                AgentUpdates = agentUpdates.ToList(),
+                AddedAgents = agentAdditions.ToList(),
             };
         }
 

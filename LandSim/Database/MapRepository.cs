@@ -178,6 +178,20 @@ namespace LandSim.Database
             await connection.ExecuteAsync(sql, action);
         }
 
+        public async Task<List<AgentAction>> PopAgentActions()
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                DELETE FROM AgentActions RETURNING AgentId, ActionType
+            """;
+
+            var actions = await connection.QueryAsync<AgentAction>(sql);
+
+            return actions.ToList();
+        }
+
         public async Task<List<AgentOwner>> GetAgentOwners()
         {
             using var connection = _connection.GetConnection();

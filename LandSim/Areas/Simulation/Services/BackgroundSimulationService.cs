@@ -42,10 +42,11 @@ namespace LandSim.Areas.Simulation.Services
                     stopWatch.Restart();
 
                     var currentWorldData = await mapRepository.GetWorldData();
+                    var agentAction = await mapRepository.PopAgentActions();
                     var owners = await mapRepository.GetAgentOwners();
                     _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, owners, new AgentAction[0]);
+                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, owners, agentAction);
                     _logger.LogInformation($"Got Updated World - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
                     var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData, updatedWorldData);
