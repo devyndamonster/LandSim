@@ -2,9 +2,11 @@
 {
     public enum AgentActionType
     {
+        None,
         MoveLeft,
         MoveRight,
         MoveUp,
         MoveDown,
+        Eat,
     }
 }

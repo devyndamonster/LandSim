@@ -138,7 +138,7 @@ namespace LandSim.Extensions
                 {
                     if (array[x, y] is null && otherArray[x, y] is not null)
                     {
-                        yield return array[x, y]!;
+                        yield return otherArray[x, y]!;
                     }
                 }
             }

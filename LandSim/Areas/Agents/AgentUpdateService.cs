@@ -23,15 +23,19 @@ namespace LandSim.Areas.Agents
                 .Where(agent => agent.Value is not null)
                 .Select(agent => new AgentContext
                 {
-                    Agent = agent.Value!,
+                    Agent = agent.Value! with
+                    {
+                        XCoord = 0,
+                        YCoord = 0,
+                    },
                     TerrainTiles = mapUpdate.TerrainTiles
-                        .GetElementsWithinRange(agent.x, agent.y, 2)
+                        .GetElementsWithinRange(agent.x, agent.y, 5)
                         .MakeRelative(agent.Value!.XCoord, agent.Value.YCoord),
                     Agents = mapUpdate.Agents
-                        .GetElementsWithinRange(agent.x, agent.y, 2)
+                        .GetElementsWithinRange(agent.x, agent.y, 5)
                         .MakeRelative(agent.Value.XCoord, agent.Value.YCoord),
                     Consumables = mapUpdate.Consumables
-                        .GetElementsWithinRange(agent.x, agent.y, 2)
+                        .GetElementsWithinRange(agent.x, agent.y, 5)
                         .MakeRelative(agent.Value.XCoord, agent.Value.YCoord),
                 })
                 .GroupBy(agentContext => agentContext.Agent.AgentOwnerId);

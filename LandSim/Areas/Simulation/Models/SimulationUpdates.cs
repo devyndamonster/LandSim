@@ -9,8 +9,12 @@ namespace LandSim.Areas.Simulation.Models
 
         public List<Consumable> AddedConsumables { get; set; } = new List<Consumable>();
 
+        public List<Consumable> RemovedConsumables { get; set; } = new List<Consumable>();
+
         public List<Agent> AgentUpdates { get; set; } = new List<Agent>();
 
         public List<Agent> AddedAgents { get; set; } = new List<Agent>();
+
+        public List<Agent> RemovedAgents { get; set; } = new List<Agent>();
     }
 }

@@ -26,47 +26,68 @@ namespace LandSim.Areas.Simulation.Services
 
                     if (action is null)
                     {
-                        return agent.Value;
+                        action = new AgentAction
+                        {
+                            AgentId = agent.Value.AgentId,
+                            ActionType = AgentActionType.None,
+                        };
                     }
 
                     var destination = action.ActionType switch
                     {
                         AgentActionType.MoveLeft => (
                             tile: currentWorldData.TerrainTiles.Left(agent.x, agent.y),
-                            consumable: currentWorldData.Consumables.Left(agent.x, agent.y),
                             agent: currentWorldData.Agents.Left(agent.x, agent.y)),
                         AgentActionType.MoveRight => (
                             tile: currentWorldData.TerrainTiles.Right(agent.x, agent.y),
-                            consumable: currentWorldData.Consumables.Right(agent.x, agent.y),
                             agent: currentWorldData.Agents.Right(agent.x, agent.y)),
                         AgentActionType.MoveUp => (
                             tile: currentWorldData.TerrainTiles.Up(agent.x, agent.y),
-                            consumable: currentWorldData.Consumables.Up(agent.x, agent.y),
                             agent: currentWorldData.Agents.Up(agent.x, agent.y)),
                         AgentActionType.MoveDown => (
                             tile: currentWorldData.TerrainTiles.Down(agent.x, agent.y),
-                            consumable: currentWorldData.Consumables.Down(agent.x, agent.y),
                             agent: currentWorldData.Agents.Down(agent.x, agent.y)),
                         _ => (
                             tile: currentWorldData.TerrainTiles[agent.x, agent.y],
-                            consumable: currentWorldData.Consumables[agent.x, agent.y],
                             agent: currentWorldData.Agents[agent.x, agent.y]),
                     };
 
-                    if (destination.tile is not null
-                        && !agent.Value.IsAt(destination.tile)
-                        && destination.tile.TerrainType != TerrainType.Water
-                        && destination.consumable is null
-                        && destination.agent is null)
+                    Func<Agent> getUpdatedAgent = action.ActionType switch
                     {
-                        return agent.Value with
+                        AgentActionType.Eat => () =>
                         {
-                            XCoord = destination.tile.XCoord,
-                            YCoord = destination.tile.YCoord,
-                        };
-                    }
+                            var consumable = currentWorldData.Consumables[agent.x, agent.y];
+                            var hungerDelta = consumable is not null ? 0.1f : 0;
 
-                    return agent.Value;
+                            return agent.Value with
+                            {
+                                Hunger = agent.Value.Hunger + hungerDelta,
+                            };
+                        },
+                        AgentActionType.MoveLeft or AgentActionType.MoveUp or AgentActionType.MoveRight or AgentActionType.MoveDown 
+                        when destination.tile is not null 
+                            && destination.tile.TerrainType is not TerrainType.Water 
+                            && destination.agent is null => () =>
+                        {
+                            var currentTile = currentWorldData.TerrainTiles[agent.x, agent.y]!;
+                            var heightIncrease = MathF.Max(0, destination.tile.Height - currentTile.Height);
+
+                            return agent.Value with
+                            {
+                                XCoord = destination.tile.XCoord,
+                                YCoord = destination.tile.YCoord,
+                                Hunger = agent.Value.Hunger - (0.02f + heightIncrease),
+                            };
+                        },
+                        _ => () => agent.Value with
+                        {
+                            Hunger = agent.Value.Hunger - 0.01f
+                        }
+                    };
+
+                    var updatedAgent = getUpdatedAgent();
+
+                    return updatedAgent.Hunger > 0 ? updatedAgent : null;
                 })
                 .OfType<Agent>()
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
@@ -108,9 +129,12 @@ namespace LandSim.Areas.Simulation.Services
             var updatedConsumablesGrid = currentWorldData.Consumables.Map(consumable =>
             {
                 var terrainTile = updatedTilesGrid[consumable.x, consumable.y];
+                var agentOnTile = updatedAgentGrid[consumable.x, consumable.y];
+                var agentAction = agentActions.GetValueOrDefault(agentOnTile?.AgentId ?? 0)?.ActionType ?? AgentActionType.None;
 
                 return consumable switch
                 {
+                    var c when c.Value is not null && agentAction == AgentActionType.Eat => null,
                     var c when c.Value is null
                         && terrainTile?.VegetationLevel > 0.95
                         && random.NextDouble() >= 0.999 =>
@@ -148,12 +172,17 @@ namespace LandSim.Areas.Simulation.Services
             var agentAdditions = updatedAgents.Values
                 .Where(agent => !currentAgents.ContainsKey(agent.AgentId));
 
+            var agentRemovals = currentAgents.Values
+                .Where(agent => !updatedAgents.ContainsKey(agent.AgentId));
+
             return new SimulationUpdates
             {
                 UpdatedTiles = updatedWorld.TerrainTiles.Updates(currentWorld.TerrainTiles).ToList(),
                 AddedConsumables = updatedWorld.Consumables.Additions(currentWorld.Consumables).ToList(),
+                RemovedConsumables = updatedWorld.Consumables.Removals(currentWorld.Consumables).ToList(),
                 AgentUpdates = agentUpdates.ToList(),
                 AddedAgents = agentAdditions.ToList(),
+                RemovedAgents = agentRemovals.ToList(),
             };
         }
 

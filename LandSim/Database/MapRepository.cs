@@ -94,6 +94,17 @@ namespace LandSim.Database
 
             sql =
             """
+                DELETE FROM Consumables
+                WHERE ConsumableId = @ConsumableId
+            """;
+
+            foreach (var consumable in updates.RemovedConsumables)
+            {
+                await connection.ExecuteAsync(sql, consumable);
+            }
+
+            sql =
+            """
                 UPDATE Agents
                 SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst
                 WHERE AgentId = @AgentId
@@ -111,6 +122,17 @@ namespace LandSim.Database
             """;
 
             foreach (var agent in updates.AddedAgents)
+            {
+                await connection.ExecuteAsync(sql, agent);
+            }
+
+            sql =
+            """
+                DELETE FROM Agents
+                WHERE AgentId = @AgentId
+            """;
+
+            foreach (var agent in updates.RemovedAgents)
             {
                 await connection.ExecuteAsync(sql, agent);
             }
