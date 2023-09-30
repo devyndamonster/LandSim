@@ -15,45 +15,97 @@ namespace LandSim.Areas.Simulation.Services
 
             var agentActions = actions.ToDictionary(action => action.AgentId);
 
+            var agents = currentWorldData.Agents
+                .Where(agent => agent.Value is not null)
+                .ToDictionary(agent => agent.Value!.AgentId, agent => agent.Value!);
+
+            //Choose agents destination based on their action
+            var agentDestinations = currentWorldData.Agents
+                .Where(agent => agent.Value is not null)
+                .ToDictionary(
+                    agent => agent.Value!.AgentId,
+                    agent =>
+                    {
+                        agentActions.TryGetValue(agent.Value!.AgentId, out var action);
+                        var actionType = action?.ActionType ?? AgentActionType.None;
+
+                        return actionType switch
+                        {
+                            AgentActionType.MoveLeft => currentWorldData.TerrainTiles.Left(agent.x, agent.y),
+                            AgentActionType.MoveRight => currentWorldData.TerrainTiles.Right(agent.x, agent.y),
+                            AgentActionType.MoveUp => currentWorldData.TerrainTiles.Up(agent.x, agent.y),
+                            AgentActionType.MoveDown => currentWorldData.TerrainTiles.Down(agent.x, agent.y),
+                            _ => currentWorldData.TerrainTiles[agent.x, agent.y],
+                        };
+                    });
+
+            //For agents trying to move to the same destination, choose one of them to go there and reset the rest
+            agentDestinations = agentDestinations
+                .ToDictionary(
+                    pair => pair.Key,
+                    pair =>
+                    {
+                        var agentId = pair.Key;
+                        var destination = pair.Value;
+                        var agent = agents[agentId];
+
+                        if (destination is null)
+                        {
+                            return destination;
+                        }
+
+                        if (agent.IsAt(destination))
+                        {
+                            return destination;
+                        }
+
+                        var otherAtDestination = agents.Values.FirstOrDefault(other => other.AgentId != agentId && other.IsAt(destination));
+
+                        if(otherAtDestination is not null)
+                        {
+                            return destination with
+                            {
+                                XCoord = agent.XCoord,
+                                YCoord = agent.YCoord,
+                            };
+                        }
+
+                        var othersMovingToDestination = agentDestinations
+                            .Where(dest => 
+                                dest.Value is not null 
+                                && dest.Value.XCoord == destination.XCoord 
+                                && dest.Value.YCoord == destination.YCoord 
+                                && dest.Key != agentId)
+                            .Select(dest => agents[dest.Key]);
+
+                        //The agent with the minimum id gets to go to the destination
+                        if(othersMovingToDestination.Any())
+                        {
+                            var minId = othersMovingToDestination.Min(other => other.AgentId);
+
+                            if (agentId > minId || othersMovingToDestination.Any(other => other.IsAt(destination)))
+                            {
+                                return destination with
+                                {
+                                    XCoord = agent.XCoord,
+                                    YCoord = agent.YCoord,
+                                };
+                            }
+                        }
+
+                        return destination;
+                    });
+
+            //Now update agents based on their actions
             var updatedAgentGrid = currentWorldData.Agents
+                .Where(agent => agent.Value is not null)
                 .Select(agent =>
                 {
-                    if (agent.Value is null)
-                    {
-                        return null;
-                    }
+                    agentActions.TryGetValue(agent.Value!.AgentId, out var action);
+                    var actionType = action?.ActionType ?? AgentActionType.None;
+                    var destination = agentDestinations[agent.Value.AgentId];
 
-                    agentActions.TryGetValue(agent.Value.AgentId, out var action);
-
-                    if (action is null)
-                    {
-                        action = new AgentAction
-                        {
-                            AgentId = agent.Value.AgentId,
-                            ActionType = AgentActionType.None,
-                        };
-                    }
-
-                    var destination = action.ActionType switch
-                    {
-                        AgentActionType.MoveLeft => (
-                            tile: currentWorldData.TerrainTiles.Left(agent.x, agent.y),
-                            agent: currentWorldData.Agents.Left(agent.x, agent.y)),
-                        AgentActionType.MoveRight => (
-                            tile: currentWorldData.TerrainTiles.Right(agent.x, agent.y),
-                            agent: currentWorldData.Agents.Right(agent.x, agent.y)),
-                        AgentActionType.MoveUp => (
-                            tile: currentWorldData.TerrainTiles.Up(agent.x, agent.y),
-                            agent: currentWorldData.Agents.Up(agent.x, agent.y)),
-                        AgentActionType.MoveDown => (
-                            tile: currentWorldData.TerrainTiles.Down(agent.x, agent.y),
-                            agent: currentWorldData.Agents.Down(agent.x, agent.y)),
-                        _ => (
-                            tile: currentWorldData.TerrainTiles[agent.x, agent.y],
-                            agent: currentWorldData.Agents[agent.x, agent.y]),
-                    };
-
-                    Func<Agent> getUpdatedAgent = action.ActionType switch
+                    Func<Agent> getUpdatedAgent = actionType switch
                     {
                         AgentActionType.Eat => () =>
                         {
@@ -64,22 +116,22 @@ namespace LandSim.Areas.Simulation.Services
                             {
                                 Hunger = agent.Value.Hunger + hungerDelta,
                             };
-                        },
-                        AgentActionType.MoveLeft or AgentActionType.MoveUp or AgentActionType.MoveRight or AgentActionType.MoveDown 
-                        when destination.tile is not null 
-                            && destination.tile.TerrainType is not TerrainType.Water 
-                            && destination.agent is null => () =>
+                        }
+                        ,
+                        AgentActionType.MoveLeft or AgentActionType.MoveUp or AgentActionType.MoveRight or AgentActionType.MoveDown
+                        when destination is not null && destination.TerrainType is not TerrainType.Water => () =>
                         {
                             var currentTile = currentWorldData.TerrainTiles[agent.x, agent.y]!;
-                            var heightIncrease = MathF.Max(0, destination.tile.Height - currentTile.Height);
+                            var heightIncrease = MathF.Max(0, destination.Height - currentTile.Height);
 
                             return agent.Value with
                             {
-                                XCoord = destination.tile.XCoord,
-                                YCoord = destination.tile.YCoord,
+                                XCoord = destination.XCoord,
+                                YCoord = destination.YCoord,
                                 Hunger = agent.Value.Hunger - (config.BaseHungerCost + config.MovementHungerCost + (heightIncrease * config.ClimbHungerCost)),
                             };
-                        },
+                        }
+                        ,
                         _ => () => agent.Value with
                         {
                             Hunger = agent.Value.Hunger - config.BaseHungerCost
@@ -92,7 +144,7 @@ namespace LandSim.Areas.Simulation.Services
                 })
                 .OfType<Agent>()
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
-            
+                
             //New Agents
             updatedAgentGrid = updatedAgentGrid.Map(agent =>
             {
@@ -151,18 +203,16 @@ namespace LandSim.Areas.Simulation.Services
         {
             var currentAgents = currentWorld.Agents
                 .Select(agent => agent.Value)
-                .OfType<Agent>()
-                .ToDictionary(agent => agent.AgentId);
+                .OfType<Agent>();
 
             var updatedAgents = updatedWorld.Agents
                 .Select(agent => agent.Value)
-                .OfType<Agent>()
-                .ToDictionary(agent => agent.AgentId);
+                .OfType<Agent>();
 
-            var agentUpdates = updatedAgents.Values
+            var agentUpdates = updatedAgents
                 .Where(agent =>
                 {
-                    if (currentAgents.TryGetValue(agent.AgentId, out var currentAgent))
+                    if (currentAgents.FirstOrDefault(current => current.AgentId == agent.AgentId) is Agent currentAgent)
                     {
                         return !agent.Equals(currentAgent);
                     }
@@ -170,11 +220,11 @@ namespace LandSim.Areas.Simulation.Services
                     return false;
                 });
 
-            var agentAdditions = updatedAgents.Values
-                .Where(agent => !currentAgents.ContainsKey(agent.AgentId));
+            var agentAdditions = updatedAgents
+                .Where(updated => !currentAgents.Any(current => current.AgentId == updated.AgentId));
 
-            var agentRemovals = currentAgents.Values
-                .Where(agent => !updatedAgents.ContainsKey(agent.AgentId));
+            var agentRemovals = currentAgents
+                .Where(current => !updatedAgents.Any(updated => updated.AgentId == current.AgentId));
 
             return new SimulationUpdates
             {

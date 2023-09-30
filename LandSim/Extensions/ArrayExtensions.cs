@@ -87,6 +87,20 @@ namespace LandSim.Extensions
             }
         }
 
+        public static IEnumerable<(int x, int y, T? Value)> Where<T>(this T?[,] map, Func<(int x, int y, T? Value), bool> func)
+        {
+            for (int x = 0; x < map.GetLength(0); x++)
+            {
+                for (int y = 0; y < map.GetLength(1); y++)
+                {
+                    if (func((x, y, map[x, y])))
+                    {
+                        yield return (x, y, map[x, y]);
+                    }
+                }
+            }
+        }
+
         public static T?[,] Map<T>(this T?[,] array, Func<(int x, int y, T? Value), T?> func)
         {
             var newArray = new T?[array.GetLength(0), array.GetLength(1)];
