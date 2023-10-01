@@ -116,22 +116,25 @@ namespace LandSim.Areas.Simulation.Services
                             {
                                 Hunger = agent.Value.Hunger + hungerDelta,
                             };
-                        }
-                        ,
-                        AgentActionType.MoveLeft or AgentActionType.MoveUp or AgentActionType.MoveRight or AgentActionType.MoveDown
-                        when destination is not null && destination.TerrainType is not TerrainType.Water => () =>
+                        },
+                        _ when actionType.IsMove() && (destination?.IsWalkable() ?? false) => () =>
                         {
                             var currentTile = currentWorldData.TerrainTiles[agent.x, agent.y]!;
                             var heightIncrease = MathF.Max(0, destination.Height - currentTile.Height);
+
+                            var hungerDecrease = 
+                                config.BaseHungerCost 
+                                + config.MovementHungerCost 
+                                + (heightIncrease * config.ClimbHungerCost) 
+                                + (destination.VegetationLevel * config.VegitationMovementHungerCost);
 
                             return agent.Value with
                             {
                                 XCoord = destination.XCoord,
                                 YCoord = destination.YCoord,
-                                Hunger = agent.Value.Hunger - (config.BaseHungerCost + config.MovementHungerCost + (heightIncrease * config.ClimbHungerCost)),
+                                Hunger = agent.Value.Hunger - hungerDecrease,
                             };
-                        }
-                        ,
+                        },
                         _ => () => agent.Value with
                         {
                             Hunger = agent.Value.Hunger - config.BaseHungerCost
@@ -171,12 +174,32 @@ namespace LandSim.Areas.Simulation.Services
             var updatedTilesGrid = currentWorldData.TerrainTiles.Map(tile =>
             {
                 var surroundingTiles = currentWorldData.TerrainTiles.GetImmediateNeighbors(tile.x, tile.y);
+                var random = new Random();
 
-                return tile switch
+                Func<TerrainTile?> getUpdatedTile = tile switch
                 {
-                    { Value.TerrainType: TerrainType.Soil } => GetVegetationUpdate(tile.Value, surroundingTiles, config),
-                    _ => tile.Value
+                    { Value.TerrainType: TerrainType.Soil } => () => {
+                        var agentOnTile = updatedAgentGrid[tile.x, tile.y];
+                        var agentAction = agentActions.GetValueOrDefault(agentOnTile?.AgentId ?? -1)?.ActionType ?? AgentActionType.None;
+                        var randomValue = random.NextDouble();
+
+                        var vegitationChange = randomValue switch
+                        {
+                            _ when agentAction.IsMove() => -config.VegitationDecreaseFromMovement,
+                            var rand when rand <= config.VegitationSpawnChance => config.VegitationGrowthRate,
+                            var rand when rand <= config.VegitationSpreadChance && surroundingTiles.Any(t => t.VegetationLevel > 0) => config.VegitationGrowthRate,
+                            _ when tile.Value.VegetationLevel > 0 => config.VegitationGrowthRate,
+                            _ => 0
+                        };
+
+                        return tile.Value with { VegetationLevel = tile.Value.VegetationLevel + vegitationChange };
+                    },
+                    _ => () => tile.Value
                 };
+
+                var updatedTile = getUpdatedTile();
+
+                return updatedTile;
             });
 
             var updatedConsumablesGrid = currentWorldData.Consumables.Map(consumable =>
@@ -234,30 +257,6 @@ namespace LandSim.Areas.Simulation.Services
                 AgentUpdates = agentUpdates.ToList(),
                 AddedAgents = agentAdditions.ToList(),
                 RemovedAgents = agentRemovals.ToList(),
-            };
-        }
-
-        private TerrainTile GetVegetationUpdate(TerrainTile tile, IEnumerable<TerrainTile> surroundingTiles, SimulationConfig config)
-        {
-            var random = new Random();
-            var randomValue = random.NextDouble();
-
-            var vegitationChange = randomValue switch
-            {
-                var rand when rand <= config.VegitationSpawnChance => config.VegitationGrowthRate,
-                var rand when rand <= config.VegitationSpreadChance && surroundingTiles.Any(t => t.VegetationLevel > 0) => config.VegitationGrowthRate,
-                _ when tile.VegetationLevel > 0 => config.VegitationGrowthRate,
-                _ => 0
-            };
-
-            return new TerrainTile
-            {
-                TerrainTileId = tile.TerrainTileId,
-                VegetationLevel = tile.VegetationLevel + vegitationChange,
-                TerrainType = tile.TerrainType,
-                Height = tile.Height,
-                XCoord = tile.XCoord,
-                YCoord = tile.YCoord,
             };
         }
     }

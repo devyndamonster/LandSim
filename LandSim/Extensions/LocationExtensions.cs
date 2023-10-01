@@ -35,5 +35,21 @@ namespace LandSim.Extensions
                 };
             }
         }
+
+        public static IEnumerable<TLocation> GetImmediateNeighbors<TLocation>(this TLocation?[,] locations, ILocation location) where TLocation : ILocation
+        {
+            for (int x = 0; x < locations.GetLength(0); x++)
+            {
+                for (int y = 0; y < locations.GetLength(1); y++)
+                {
+                    if (locations[x, y]?.IsAt(location) ?? false)
+                    {
+                        return locations.GetImmediateNeighbors(x, y);
+                    }
+                }
+            }
+
+            return Enumerable.Empty<TLocation>();
+        }
     }
 }

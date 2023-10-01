@@ -22,5 +22,7 @@ namespace LandSim.Areas.Map.Models
             get => _vegitiationLevel;
             init => _vegitiationLevel = Math.Clamp(value, 0, 1);
         }
+
+        public bool IsWalkable() => TerrainType is not TerrainType.Water;
     }
 }

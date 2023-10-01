@@ -51,15 +51,10 @@ namespace LandSim.Extensions
 
         public static IEnumerable<T> GetImmediateNeighbors<T>(this T?[,] array, int x, int y)
         {
-            var neighbors = new List<T?>
-            {
-                array.Left(x, y),
-                array.Right(x, y),
-                array.Up(x, y),
-                array.Down(x, y)
-            };
-
-            return neighbors.Where(n => n != null).Select(n => n!);
+            if (array.Left(x, y) is T left) yield return left;
+            if (array.Right(x, y) is T right) yield return right;
+            if (array.Up(x, y) is T up) yield return up;
+            if (array.Down(x, y) is T down) yield return down;
         }
 
         public static IEnumerable<T> GetElementsWithinRange<T>(this T?[,] array, int x, int y, int range)

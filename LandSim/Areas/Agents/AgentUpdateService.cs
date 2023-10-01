@@ -18,8 +18,9 @@ namespace LandSim.Areas.Agents
 
         public async Task SendSimulationUpdate(MapUpdateEvent mapUpdate)
         {
+            var simulationConfig = (await _repository.GetConfigs()).FirstOrDefault();
+
             var agentContextUpdates = mapUpdate.Agents
-                .Select(agent => agent)
                 .Where(agent => agent.Value is not null)
                 .Select(agent => new AgentContext
                 {
@@ -37,8 +38,9 @@ namespace LandSim.Areas.Agents
                     Consumables = mapUpdate.Consumables
                         .GetElementsWithinRange(agent.x, agent.y, 5)
                         .MakeRelative(agent.Value.XCoord, agent.Value.YCoord),
+                    SimulationConfig = simulationConfig,
                 })
-                .GroupBy(agentContext => agentContext.Agent.AgentOwnerId);
+                .GroupBy(agentContext => agentContext.Agent!.AgentOwnerId);
 
             var agentOwners = await _repository.GetAgentOwners();
 
