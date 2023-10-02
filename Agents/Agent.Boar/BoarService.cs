@@ -1,7 +1,9 @@
 ﻿using LandSim.Areas.Agents.Models;
 using LandSim.Areas.Configuration.Models;
+using LandSim.Areas.Map.Enums;
 using LandSim.Areas.Map.Models;
 using LandSim.Extensions;
+using System.Linq;
 
 namespace Agent.Boar
 {
@@ -11,44 +13,86 @@ namespace Agent.Boar
         {
             if (context.Agent is null) throw new NullReferenceException("Recieved agent was null");
 
+            var random = new Random();
+            var shortTermMemory = ShortTermMemory.FromCompressedString(context.Agent.ShortTermMemory) ?? new ShortTermMemory();
+            if(shortTermMemory.WanderDestination is null || shortTermMemory.WanderStepsRemaining <= 0 || context.Agent.IsAt(shortTermMemory.WanderDestination))
+            {
+                shortTermMemory = shortTermMemory with
+                {
+                    //TODO: We should update this per move
+                    WanderDestination = new Destination
+                    {
+                        XCoord = random.Next(-20, 21),
+                        YCoord = random.Next(-20, 21)
+                    },
+                    WanderStepsRemaining = 10
+                };
+            }
+            else
+            {
+                shortTermMemory = shortTermMemory with
+                {
+                    WanderStepsRemaining = shortTermMemory.WanderStepsRemaining - 1
+                };
+            }
+
             var closestConsumable = context.Consumables
                 .OrderBy(consumable => Math.Abs(consumable.XCoord - context.Agent.XCoord) + Math.Abs(consumable.YCoord - context.Agent.YCoord))
                 .FirstOrDefault();
 
-            ILocation destination = context.Agent;
-            if(closestConsumable is not null && !context.Agent.IsAt(closestConsumable))
+            ILocation destination = context.Agent switch
             {
-                destination = GetNextMoveTarget(context.Agent, closestConsumable, context.TerrainTiles, context.SimulationConfig ?? new SimulationConfig());
-            }
+                var agent when closestConsumable is not null => closestConsumable!,
+                _ => shortTermMemory.WanderDestination!
+            };
 
-            var agentAction = destination switch
+            ILocation nextMoveTarget = context.Agent.IsAt(destination) 
+                ? destination 
+                : GetNextMoveTarget(context.Agent, destination, context.TerrainTiles, context.SimulationConfig ?? new SimulationConfig());
+
+            var agentAction = nextMoveTarget switch
             {
                 var dest when dest.XCoord < context.Agent.XCoord => AgentActionType.MoveLeft,
                 var dest when dest.XCoord > context.Agent.XCoord => AgentActionType.MoveRight,
                 var dest when dest.YCoord < context.Agent.YCoord => AgentActionType.MoveUp,
                 var dest when dest.YCoord > context.Agent.YCoord => AgentActionType.MoveDown,
-                _ when closestConsumable is not null && context.Agent.IsAt(closestConsumable) => AgentActionType.Eat,
-                _ => (AgentActionType)new Random().Next(1, 5)
+                Consumable => AgentActionType.Eat,
+                _ => AgentActionType.None
             };
 
             return new AgentAction
             {
                 AgentId = context.Agent.AgentId,
-                ActionType = agentAction
+                ActionType = agentAction,
+                UpdatedShortTermMemory = shortTermMemory.ToCompressedString()
             };
         }
 
-        private TerrainTile GetNextMoveTarget(ILocation currentLocation, ILocation destination, IEnumerable<TerrainTile> tiles, SimulationConfig config)
+        private ILocation GetNextMoveTarget(ILocation currentLocation, ILocation destination, IEnumerable<TerrainTile> tiles, SimulationConfig config)
         {
-            var nodes = tiles.Select(tile => new LocationNode(tile)).ToArray();
+            var nodes = tiles
+                .Select(tile => new LocationNode(tile))
+                .Concat(tiles.Any(destination.IsAt) 
+                    ? Enumerable.Empty<LocationNode>() 
+                    : new LocationNode[] { GetDefaultLocationNode(destination.XCoord, destination.YCoord) })
+                .ToArray();
+
             var bounds = Bounds.FromLocations(nodes);
-            var grid = nodes.MapLocationsToBoundedGrid(bounds);
-            var startNode = new LocationNode(tiles.First(currentLocation.IsAt));
-            var endNode = new LocationNode(tiles.First(destination.IsAt));
+            var grid = nodes.MapLocationsToBoundedGrid(bounds, GetDefaultLocationNode);
+
+            var startNode = nodes.First(currentLocation.IsAt);
+            var endNode = nodes.First(destination.IsAt);
 
             var path = CalculatePath(startNode, endNode, grid, config);
-            return path.First().Tile;
+            return path.FirstOrDefault()?.Tile ?? currentLocation;
         }
+
+        private LocationNode GetDefaultLocationNode(int xCoord, int yCoord) => new LocationNode(new TerrainTile 
+        { 
+            XCoord = xCoord, 
+            YCoord = yCoord, 
+            TerrainType = TerrainType.Sand 
+        });
 
         //Calculate path using A* algorithm
         private List<LocationNode> CalculatePath(LocationNode start, LocationNode end, LocationNode?[,] grid, SimulationConfig config)

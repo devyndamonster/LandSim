@@ -107,7 +107,7 @@ namespace LandSim.Database
             sql =
             """
                 UPDATE Agents
-                SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst
+                SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst, ShortTermMemory = @ShortTermMemory
                 WHERE AgentId = @AgentId
             """;
 
@@ -178,7 +178,8 @@ namespace LandSim.Database
                     YCoord,
                     AgentOwnerId,
                     Hunger,
-                    Thirst
+                    Thirst,
+                    ShortTermMemory
                 FROM Agents
             """;
 
@@ -193,8 +194,8 @@ namespace LandSim.Database
 
             var sql =
             """
-                INSERT INTO AgentActions (AgentId, ActionType)
-                VALUES (@AgentId, @ActionType)
+                INSERT INTO AgentActions (AgentId, ActionType, UpdatedShortTermMemory)
+                VALUES (@AgentId, @ActionType, @UpdatedShortTermMemory)
                 ON CONFLICT (AgentId) DO UPDATE SET ActionType = @ActionType
             """;
 
@@ -207,7 +208,7 @@ namespace LandSim.Database
 
             var sql =
             """
-                DELETE FROM AgentActions RETURNING AgentId, ActionType
+                DELETE FROM AgentActions RETURNING AgentId, ActionType, UpdatedShortTermMemory
             """;
 
             var actions = await connection.QueryAsync<AgentAction>(sql);

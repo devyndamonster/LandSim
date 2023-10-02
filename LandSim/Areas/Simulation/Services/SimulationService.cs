@@ -146,6 +146,14 @@ namespace LandSim.Areas.Simulation.Services
                     return updatedAgent.Hunger > 0 ? updatedAgent : null;
                 })
                 .OfType<Agent>()
+                .Select(agent =>
+                {
+                    agentActions.TryGetValue(agent.AgentId, out var action);
+                    return agent with
+                    {
+                        ShortTermMemory = action?.UpdatedShortTermMemory ?? agent.ShortTermMemory,
+                    };
+                })
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
                 
             //New Agents

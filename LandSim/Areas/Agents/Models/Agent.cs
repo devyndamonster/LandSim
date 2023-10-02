@@ -1,5 +1,6 @@
 ﻿using LandSim.Areas.Map.Models;
 using LandSim.Shared;
+using System.ComponentModel.DataAnnotations;
 
 namespace LandSim.Areas.Agents.Models
 {
@@ -22,5 +23,8 @@ namespace LandSim.Areas.Agents.Models
         /// Thirst amount, where low amounts are thirsty and high amounts are hydrated.
         /// </summary>
         public float Thirst { get; init; } = 1f;
+
+        [MaxLength(300)]
+        public string ShortTermMemory { get; init; } = string.Empty;
     }
 }

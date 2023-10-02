@@ -14,5 +14,8 @@ namespace LandSim.Areas.Agents.Models
 
         [Required]
         public AgentActionType ActionType { get; set; }
+
+        [MaxLength(300)]
+        public string? UpdatedShortTermMemory { get; set; }
     }
 }

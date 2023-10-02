@@ -24,6 +24,26 @@ namespace LandSim.Extensions
             return locationArray;
         }
 
+        public static TLocation?[,] MapLocationsToBoundedGrid<TLocation>(this IEnumerable<TLocation> locations, Bounds bounds, Func<int, int, TLocation> getDefault) where TLocation : ILocation
+        {
+            var locationArray = locations.MapLocationsToBoundedGrid(bounds);
+
+            for (int x = 0; x < locationArray.GetLength(0); x++)
+            {
+                for (int y = 0; y < locationArray.GetLength(1); y++)
+                {
+                    if (locationArray[x, y] is null)
+                    {
+                        var xCoord = x + bounds.MinX;
+                        var yCoord = y + bounds.MinY;
+                        locationArray[x, y] = getDefault(xCoord, yCoord);
+                    }
+                }
+            }
+
+            return locationArray;
+        }
+
         public static IEnumerable<TLocation> MakeRelative<TLocation>(this IEnumerable<TLocation> locations, int xCoord, int yCoord) where TLocation : BaseRecord, ILocation 
         {
             foreach(var location in locations)
