@@ -8,6 +8,7 @@
         MoveUp,
         MoveDown,
         Eat,
+        Drink,
     }
 
     public static class AgentActionTypeExtensions

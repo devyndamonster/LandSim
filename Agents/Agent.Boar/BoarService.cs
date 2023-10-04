@@ -13,6 +13,15 @@ namespace Agent.Boar
         {
             if (context.Agent is null) throw new NullReferenceException("Recieved agent was null");
 
+            var closestConsumable = context.Consumables
+                .OrderBy(context.Agent.DistanceTo)
+                .FirstOrDefault();
+
+            var closestWaterSource = context.TerrainTiles
+                .Where(tile => tile.TerrainType == TerrainType.Water)
+                .OrderBy(context.Agent.DistanceTo)
+                .FirstOrDefault();
+
             var random = new Random();
             var shortTermMemory = ShortTermMemory.FromCompressedString(context.Agent.ShortTermMemory) ?? new ShortTermMemory();
             if(shortTermMemory.WanderDestination is null || shortTermMemory.WanderStepsRemaining <= 0 || context.Agent.IsAt(shortTermMemory.WanderDestination))
@@ -36,12 +45,19 @@ namespace Agent.Boar
                 };
             }
 
-            var closestConsumable = context.Consumables
-                .OrderBy(consumable => Math.Abs(consumable.XCoord - context.Agent.XCoord) + Math.Abs(consumable.YCoord - context.Agent.YCoord))
-                .FirstOrDefault();
+            if(shortTermMemory.WaterSource is null 
+                || (closestWaterSource is not null && context.Agent.DistanceTo(shortTermMemory.WaterSource) > context.Agent.DistanceTo(closestWaterSource)))
+            {
+                shortTermMemory = shortTermMemory with
+                {
+                    WaterSource = closestWaterSource
+                };
+            }
 
             ILocation destination = context.Agent switch
             {
+                { Thirst: < 0.15f } when closestWaterSource is not null => closestWaterSource,
+                { Thirst: < 0.15f } when closestWaterSource is null => shortTermMemory.WanderDestination,
                 var agent when closestConsumable is not null => closestConsumable!,
                 _ => shortTermMemory.WanderDestination!
             };
@@ -57,6 +73,7 @@ namespace Agent.Boar
                 var dest when dest.YCoord < context.Agent.YCoord => AgentActionType.MoveUp,
                 var dest when dest.YCoord > context.Agent.YCoord => AgentActionType.MoveDown,
                 Consumable => AgentActionType.Eat,
+                var dest when closestWaterSource is not null && context.Agent.DistanceTo(closestWaterSource) <= 1 => AgentActionType.Drink,
                 _ => AgentActionType.None
             };
 

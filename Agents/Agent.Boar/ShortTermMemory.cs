@@ -1,5 +1,7 @@
 ﻿using System.Text.Json;
 using System.IO.Compression;
+using LandSim.Areas.Agents.Models;
+using LandSim.Areas.Map.Models;
 
 namespace Agent.Boar
 {
@@ -8,6 +10,10 @@ namespace Agent.Boar
         public Destination? WanderDestination { get; init; }
 
         public int WanderStepsRemaining { get; init; }
+
+        public ILocation? WaterSource { get; init; }
+
+        public AgentActionType PreviousAction { get; init; }
 
         public string ToCompressedString()
         {

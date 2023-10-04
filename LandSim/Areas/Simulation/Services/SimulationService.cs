@@ -104,17 +104,25 @@ namespace LandSim.Areas.Simulation.Services
                     agentActions.TryGetValue(agent.Value!.AgentId, out var action);
                     var actionType = action?.ActionType ?? AgentActionType.None;
                     var destination = agentDestinations[agent.Value.AgentId];
+                    var consumable = currentWorldData.Consumables[agent.x, agent.y];
+                    var neighboringTiles = currentWorldData.TerrainTiles.GetImmediateNeighbors(agent.x, agent.y);
 
                     Func<Agent> getUpdatedAgent = actionType switch
                     {
-                        AgentActionType.Eat => () =>
+                        AgentActionType.Eat when consumable is not null => () =>
                         {
-                            var consumable = currentWorldData.Consumables[agent.x, agent.y];
-                            var hungerDelta = consumable is not null ? config.ConsumableHungerIncrease : -config.BaseHungerCost;
-
                             return agent.Value with
                             {
-                                Hunger = agent.Value.Hunger + hungerDelta,
+                                Hunger = agent.Value.Hunger + config.ConsumableHungerIncrease,
+                                Thirst = agent.Value.Thirst - config.BaseThirstCost
+                            };
+                        },
+                        AgentActionType.Drink when neighboringTiles.Any(tile => tile.TerrainType == TerrainType.Water) => () =>
+                        {
+                            return agent.Value with
+                            {
+                                Thirst = agent.Value.Thirst + config.DrinkThirstIncrease,
+                                Hunger = agent.Value.Hunger - config.BaseHungerCost
                             };
                         },
                         _ when actionType.IsMove() && (destination?.IsWalkable() ?? false) => () =>
@@ -133,17 +141,19 @@ namespace LandSim.Areas.Simulation.Services
                                 XCoord = destination.XCoord,
                                 YCoord = destination.YCoord,
                                 Hunger = agent.Value.Hunger - hungerDecrease,
+                                Thirst = agent.Value.Thirst - config.BaseThirstCost
                             };
                         },
                         _ => () => agent.Value with
                         {
-                            Hunger = agent.Value.Hunger - config.BaseHungerCost
+                            Hunger = agent.Value.Hunger - config.BaseHungerCost,
+                            Thirst = agent.Value.Thirst - config.BaseThirstCost
                         }
                     };
 
                     var updatedAgent = getUpdatedAgent();
 
-                    return updatedAgent.Hunger > 0 ? updatedAgent : null;
+                    return updatedAgent.Hunger > 0 && updatedAgent.Thirst > 0 ? updatedAgent : null;
                 })
                 .OfType<Agent>()
                 .Select(agent =>

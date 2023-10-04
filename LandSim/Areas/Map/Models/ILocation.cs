@@ -13,6 +13,11 @@
         {
             return location.XCoord == other.XCoord && location.YCoord == other.YCoord;
         }
+
+        public static int DistanceTo(this ILocation location, ILocation other)
+        {
+            return Math.Abs(location.XCoord - other.XCoord) + Math.Abs(location.YCoord - other.YCoord);
+        }
     }
 }
 

@@ -18,6 +18,10 @@
 
         public float AgentSpawnChange { get; set; } = 0.0001f;
 
+        public float BaseThirstCost { get; set; } = 0.01f;
+
+        public float DrinkThirstIncrease { get; set; } = 0.1f;
+
         public float VegitationMovementHungerCost { get; set; } = 0.02f;
 
         public float VegitationSpawnChance { get; set; } = 0.0001f;
