@@ -1,5 +1,8 @@
 using LandSim.Areas.Agents.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Text;
+using System.Text.Json;
 
 namespace Agent.Boar
 {
@@ -30,5 +33,26 @@ namespace Agent.Boar
 
             return Ok();
         }
+
+        [HttpGet("short-term-memory")]
+        public IActionResult GetDecodedShortTermMemory([FromQuery] string compressedMemory)
+        {
+            var memoryString = Base64UrlDecode(compressedMemory);
+            var decodedMemory = ShortTermMemory.FromCompressedString(memoryString);
+            var jsonString = JsonSerializer.Serialize(decodedMemory, new JsonSerializerOptions { WriteIndented = true });
+            return Ok(jsonString);
+        }
+
+        private static string Base64UrlDecode(string encodedData)
+        {
+            var decoded = encodedData.Replace('-', '+').Replace('_', '/');
+            switch (decoded.Length % 4)
+            {
+                case 2: decoded += "=="; break;
+                case 3: decoded += "="; break;
+            }
+            return decoded;
+        }
+
     }
 }

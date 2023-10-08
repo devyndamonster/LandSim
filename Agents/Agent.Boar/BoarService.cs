@@ -50,7 +50,7 @@ namespace Agent.Boar
             {
                 shortTermMemory = shortTermMemory with
                 {
-                    WaterSource = closestWaterSource
+                    WaterSource = closestWaterSource is not null ? new Destination{ XCoord = closestWaterSource.XCoord, YCoord = closestWaterSource.YCoord } : null
                 };
             }
 

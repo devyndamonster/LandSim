@@ -11,7 +11,7 @@ namespace Agent.Boar
 
         public int WanderStepsRemaining { get; init; }
 
-        public ILocation? WaterSource { get; init; }
+        public Destination? WaterSource { get; init; }
 
         public AgentActionType PreviousAction { get; init; }
 
@@ -30,7 +30,7 @@ namespace Agent.Boar
                 byte[] decompressed = Decompress(compressed);
                 return JsonSerializer.Deserialize<ShortTermMemory>(decompressed);
             } 
-            catch(Exception)
+            catch(Exception e)
             {
                 return null;
             }

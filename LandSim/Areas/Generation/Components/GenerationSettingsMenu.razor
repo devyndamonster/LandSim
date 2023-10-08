@@ -51,25 +51,25 @@
 @code {
 
     [Parameter, EditorRequired]
-    public GenerationSettings Settings { get; set; }
+    public GenerationSettings Settings { get; set; } = null!;
 
     [Parameter, EditorRequired]
-    public Action<GenerationSettings> OnSettingsUpdated { get; set; }
+    public Action<GenerationSettings> OnSettingsUpdated { get; set; } = null!;
 
     [Parameter, EditorRequired]
-    public Action OnGeneratedTerrainApplied { get; set; }
+    public Func<Task> OnGeneratedTerrainApplied { get; set; } = null!;
 
     [Inject]
-    public TerrainService TerrainService { get; set; }
+    public TerrainService TerrainService { get; set; } = null!;
 
     private void UpdateSettings()
     {
         OnSettingsUpdated(Settings);
     }
 
-    private void ApplyGeneratedTerrain()
+    private async Task ApplyGeneratedTerrain()
     {
-        OnGeneratedTerrainApplied();
+        await OnGeneratedTerrainApplied();
     }
 
 }

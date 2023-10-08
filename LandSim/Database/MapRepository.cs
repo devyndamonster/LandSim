@@ -11,56 +11,44 @@ namespace LandSim.Database
 {
     public class MapRepository
     {
-        private readonly MapContext _mapContext;
         private readonly DatabaseConnection _connection;
 
-        public MapRepository(MapContext mapContext, DatabaseConnection connection)
+        public MapRepository(DatabaseConnection connection)
         {
-            _mapContext = mapContext;
             _connection = connection;
         }
 
-        public void SaveSettings(GenerationSettings settings)
+        public async Task ReplaceTerrain(TerrainTile?[,] terrain)
         {
-            var currentSettings = _mapContext.GenerationSettings.FirstOrDefault(s => s.GenerationSettingsId == settings.GenerationSettingsId);
-            
-            if (currentSettings != null)
-            {
-                _mapContext.Update(settings);
-            }
-            else
-            {
-                _mapContext.GenerationSettings.Add(settings);
-            }
+            using var connection = _connection.GetConnection();
+            connection.Open();
 
-            _mapContext.SaveChanges();
-        }
+            using var transaction = connection.BeginTransaction();
 
-        public GenerationSettings GetSettings()
-        {
-            var settings = _mapContext.GenerationSettings
-                .Include(setting => setting.TerrainSelectors)
-                .ToList()
-                .FirstOrDefault();
+            var sql = "DELETE FROM TerrainTiles";
+            await connection.ExecuteAsync(sql);
 
-            return settings ?? new GenerationSettings();
-        }
+            sql = "DELETE FROM Consumables";
+            await connection.ExecuteAsync(sql);
 
-        public void ReplaceTerrain(TerrainTile?[,] terrain)
-        {
-            _mapContext.Database.ExecuteSqlRaw("DELETE FROM TerrainTiles");
-            _mapContext.Database.ExecuteSqlRaw("DELETE FROM Consumables");
-            _mapContext.Database.ExecuteSqlRaw("DELETE FROM Agents");
+            sql = "DELETE FROM Agents";
+            await connection.ExecuteAsync(sql);
+
+            sql =
+            """
+                INSERT INTO TerrainTiles (TerrainType, Height, VegetationLevel, XCoord, YCoord)
+                VALUES (@TerrainType, @Height, @VegetationLevel, @XCoord, @YCoord)
+            """;
 
             foreach (var tile in terrain)
             {
                 if (tile != null)
                 {
-                    _mapContext.TerrainTiles.Add(tile);
+                    await connection.ExecuteAsync(sql, tile);
                 }
             }
 
-            _mapContext.SaveChanges();
+            transaction.Commit();
         }
         
         public async Task SaveSimulationUpdates(SimulationUpdates updates)
@@ -230,6 +218,23 @@ namespace LandSim.Database
             """;
 
             return (await connection.QueryAsync<AgentOwner>(sql)).ToList();
+        }
+
+        public async Task<AgentOwner> GetAgentOwner(int agentOwnerId)
+        {
+            using var connection = _connection.GetConnection();
+
+            var sql =
+            """
+                SELECT
+                    AgentOwnerId,
+                    Key,
+                    PostbackUrl
+                FROM AgentOwner
+                WHERE AgentOwnerId = @AgentOwnerId
+            """;
+
+            return await connection.QuerySingleAsync<AgentOwner>(sql, new { AgentOwnerId = agentOwnerId });
         }
 
         public async Task<int> InsertAgentOwner(AgentOwner owner)

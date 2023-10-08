@@ -1,4 +1,5 @@
 ﻿@using LandSim.Areas.Agents.Models;
+@using LandSim.Areas.Agents;
 @using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Map.Services;
 @using LandSim.Extensions;
@@ -10,11 +11,14 @@
     {
         @for (int y = 0; y < Terrain.GetLength(1); y++)
         {
+            int localX = x;
+            int localY = y;
+
             <div id="[@x][@y]" class="terrain-tile" style="background-color: @(GetColorForTile(Terrain[x,y]));">
                 <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; display: flex; justify-content: center; align-items: center; color: white;">
                     @if (Agents.IsInArray(x, y) && Agents[x, y] is not null)
                     {
-                        <div>&#128023;</div>
+                        <div @onclick="() => OnAgentClicked(Agents[localX, localY]!)">&#128023;</div>
                     }
                     else if (Consumables.IsInArray(x, y) && Consumables[x, y] is not null)
                     {
@@ -37,6 +41,9 @@
     [Parameter]
     public Agent?[,] Agents { get; set; } = new Agent?[0, 0];
 
+    [Parameter]
+    public Action<Agent>? OnAgentSelected { get; set; }
+
     [Inject]
     public TerrainService TerrainService { get; set; } = default!;
 
@@ -48,6 +55,14 @@
         }
 
         return (new LandSim.Areas.Map.Models.Color(0)).GetCssColor();
+    }
+
+    public void OnAgentClicked(Agent agent)
+    {
+        if(OnAgentSelected != null)
+        {
+            OnAgentSelected(agent);
+        }
     }
 
 }

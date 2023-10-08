@@ -1,19 +1,38 @@
 ﻿@page "/world"
 @using LandSim.Areas.Agents.Models;
+@using LandSim.Areas.Agents;
 @using LandSim.Areas.Map.Components
 @using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Simulation;
 @using LandSim.Areas.Simulation.Models;
 @using LandSim.Database;
+@using System.Text.Json;
+@using LandSim.Extensions;
 
 <PageTitle>World Map</PageTitle>
 
 <div style="height:100%; width:100%; padding:5px;">
     <div style="height:100%; width:100%; position:relative;">
         <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
-            <MapGrid Terrain="terrain" Consumables="consumables" Agents="agents" />
+            <MapGrid Terrain="terrain" Consumables="consumables" Agents="agents" OnAgentSelected="OnAgentClicked" />
         </div>
     </div>
+    <Drawer Width="400" Closable="true" Visible="selectedAgent is not null" Placement="right" Title='($"Agent {selectedAgent?.AgentId}")' OnClose="() => selectedAgent = null" OnOpen="LoadAgentMemory">
+
+        <p>Agent Details</p>
+        <pre>@(JsonSerializer.Serialize(selectedAgent, new JsonSerializerOptions { WriteIndented = true }))</pre>
+        <br /><br />
+
+        <p>Agent Memory</p>
+        @if(agentMemory is not null)
+        {
+            <pre>@agentMemory</pre>
+        }
+        else
+        {
+            <div>Loading...</div>
+        }
+    </Drawer>
 </div>
 
 
@@ -29,11 +48,18 @@
     [Inject]
     public SimulationEventAggregator SimulationEventAggregator { get; set; } = null!;
 
-    private TerrainTile?[,] terrain { get; set; } = new TerrainTile[0, 0];
+    [Inject]
+    public AgentOwnerClient AgentOwnerClient { get; set; } = null!;
 
-    private Consumable?[,] consumables { get; set; } = new Consumable[0, 0];
+    private TerrainTile?[,] terrain = new TerrainTile[0, 0];
 
-    private Agent?[,] agents { get; set; } = new Agent[0, 0];
+    private Consumable?[,] consumables = new Consumable[0, 0];
+
+    private Agent?[,] agents = new Agent[0, 0];
+
+    private Agent? selectedAgent = null;
+
+    private string? agentMemory = null;
 
     protected override async void OnInitialized()
     {
@@ -45,13 +71,26 @@
         SimulationEventAggregator.Subscribe<MapUpdateEvent>(UpdateTerrain);
     }
 
-    public void UpdateTerrain(MapUpdateEvent mapUpdateEvent)
+    public async void UpdateTerrain(MapUpdateEvent mapUpdateEvent)
     {
         terrain = mapUpdateEvent.TerrainTiles;
         consumables = mapUpdateEvent.Consumables;
         agents = mapUpdateEvent.Agents;
 
-        InvokeAsync(StateHasChanged);
+        if(selectedAgent is not null)
+        {
+            var updatedAgent = agents
+                .Where(agent => agent.Value?.AgentId == selectedAgent.AgentId)
+                .FirstOrDefault().Value;
+
+            if(updatedAgent is not null)
+            {
+                selectedAgent = updatedAgent;
+                await LoadAgentMemory();
+            }
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
     public async Task<WorldData> GetWorldData()
@@ -63,9 +102,26 @@
         }
     }
 
+    public void OnAgentClicked(Agent agent)
+    {
+        selectedAgent = agent;
+    }
+
+    public async Task LoadAgentMemory()
+    {
+        if(selectedAgent is null)
+        {
+            return;
+        }
+
+        agentMemory = await AgentOwnerClient.GetDecodedShortTermMemory(selectedAgent);
+        await InvokeAsync(StateHasChanged);
+    }
+
     public void Dispose()
     {
         SimulationEventAggregator.Unsubscribe<MapUpdateEvent>(UpdateTerrain);
     }
+
 
 }
