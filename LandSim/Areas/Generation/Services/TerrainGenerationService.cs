@@ -22,6 +22,11 @@ namespace LandSim.Areas.Generation.Services
                     var terrainType = settings.TerrainSelectors.FirstOrDefault(selector =>
                         selector.DoesApply(perlinNoiseValue))?.TerrainType ?? TerrainType.Water;
 
+                    if (x == 0 || y == 0 || x == settings.Height - 1 || y == settings.Width - 1)
+                    {
+                        terrainType = TerrainType.Void;
+                    }
+
                     terrain[x, y] = new TerrainTile
                     {
                         XCoord = x,

@@ -1,4 +1,5 @@
 using LandSim.Areas.Agents;
+using LandSim.Areas.Generation.Database;
 using LandSim.Areas.Generation.Services;
 using LandSim.Areas.Map.Services;
 using LandSim.Areas.Simulation;
@@ -9,6 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<MapContext>(ServiceLifetime.Transient);
 builder.Services.AddTransient<MapRepository>();
+builder.Services.AddSingleton<GenerationSettingsRepository>();
 builder.Services.AddHttpClient<AgentOwnerClient>();
 builder.Services.AddSingleton<AgentUpdateService>();
 builder.Services.AddSingleton<TerrainService>();

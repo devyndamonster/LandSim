@@ -24,42 +24,56 @@ namespace Agent.Boar
 
             var random = new Random();
             var shortTermMemory = ShortTermMemory.FromCompressedString(context.Agent.ShortTermMemory) ?? new ShortTermMemory();
-            if(shortTermMemory.WanderDestination is null || shortTermMemory.WanderStepsRemaining <= 0 || context.Agent.IsAt(shortTermMemory.WanderDestination))
+
+            //Update destinations relative to what our previous action was
+            (int deltaX, int deltaY) = shortTermMemory.PreviousAction switch
             {
-                shortTermMemory = shortTermMemory with
+                AgentActionType.MoveLeft => (-1, 0),
+                AgentActionType.MoveRight => (1, 0),
+                AgentActionType.MoveUp => (0, -1),
+                AgentActionType.MoveDown => (0, 1),
+                _ => (0, 0)
+            };
+
+            shortTermMemory = shortTermMemory with
+            {
+                WanderDestination = shortTermMemory.WanderDestination switch
                 {
-                    //TODO: We should update this per move
-                    WanderDestination = new Destination
+                    var dest when dest is null || shortTermMemory.WanderStepsRemaining <= 0 || context.Agent.IsAt(dest) => new Destination
                     {
                         XCoord = random.Next(-20, 21),
                         YCoord = random.Next(-20, 21)
                     },
-                    WanderStepsRemaining = 10
-                };
-            }
-            else
-            {
-                shortTermMemory = shortTermMemory with
+                    var dest => new Destination
+                    {
+                        XCoord = dest!.XCoord - deltaX,
+                        YCoord = dest.YCoord - deltaY
+                    }
+                },
+                WaterSource = shortTermMemory.WaterSource switch
                 {
-                    WanderStepsRemaining = shortTermMemory.WanderStepsRemaining - 1
-                };
-            }
-
-            if(shortTermMemory.WaterSource is null 
-                || (closestWaterSource is not null && context.Agent.DistanceTo(shortTermMemory.WaterSource) > context.Agent.DistanceTo(closestWaterSource)))
-            {
-                shortTermMemory = shortTermMemory with
-                {
-                    WaterSource = closestWaterSource is not null ? new Destination{ XCoord = closestWaterSource.XCoord, YCoord = closestWaterSource.YCoord } : null
-                };
-            }
+                    var dest when closestWaterSource is not null 
+                        && (dest is null || context.Agent.DistanceTo(dest) > context.Agent.DistanceTo(closestWaterSource)) => new Destination 
+                    { 
+                        XCoord = closestWaterSource.XCoord, 
+                        YCoord = closestWaterSource.YCoord
+                    },
+                    var dest when dest is not null => new Destination
+                    {
+                        XCoord = dest.XCoord - deltaX,
+                        YCoord = dest.YCoord - deltaY
+                    },
+                    var dest => dest
+                },
+                WanderStepsRemaining = shortTermMemory.WanderStepsRemaining <= 0 ? 10 : shortTermMemory.WanderStepsRemaining - 1
+            };
 
             ILocation destination = context.Agent switch
             {
-                { Thirst: < 0.15f } when closestWaterSource is not null => closestWaterSource,
-                { Thirst: < 0.15f } when closestWaterSource is null => shortTermMemory.WanderDestination,
-                var agent when closestConsumable is not null => closestConsumable!,
-                _ => shortTermMemory.WanderDestination!
+                { Thirst: < 0.25f } when shortTermMemory.WaterSource is not null => shortTermMemory.WaterSource,
+                { Thirst: < 0.25f } when shortTermMemory.WaterSource is null => shortTermMemory.WanderDestination,
+                var agent when closestConsumable is not null => closestConsumable,
+                _ => shortTermMemory.WanderDestination
             };
 
             ILocation nextMoveTarget = context.Agent.IsAt(destination) 
@@ -75,6 +89,11 @@ namespace Agent.Boar
                 Consumable => AgentActionType.Eat,
                 var dest when closestWaterSource is not null && context.Agent.DistanceTo(closestWaterSource) <= 1 => AgentActionType.Drink,
                 _ => AgentActionType.None
+            };
+
+            shortTermMemory = shortTermMemory with
+            {
+                PreviousAction = agentAction
             };
 
             return new AgentAction
@@ -138,7 +157,7 @@ namespace Agent.Boar
 
                 foreach(var neighbor in grid.GetImmediateNeighbors(current))
                 {
-                    if(!neighbor.Tile.IsWalkable() || closed.Any(neighbor.IsAt))
+                    if(!neighbor.IsAt(end) && (!neighbor.Tile.IsWalkable() || closed.Any(neighbor.IsAt)))
                     {
                         continue;
                     }

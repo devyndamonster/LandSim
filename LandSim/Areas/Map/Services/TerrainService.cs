@@ -20,6 +20,7 @@ namespace LandSim.Areas.Map.Services
                 TerrainType.Sand => new Color(200, 200, 0),
                 TerrainType.Soil => new Color(100, 100, 0),
                 TerrainType.Rock => new Color(100),
+                TerrainType.Void => new Color(0),
                 _ => new Color(0)
             };
         }
