@@ -95,7 +95,13 @@ namespace LandSim.Database
             sql =
             """
                 UPDATE Agents
-                SET XCoord = @XCoord, YCoord = @YCoord, Hunger = @Hunger, Thirst = @Thirst, ShortTermMemory = @ShortTermMemory
+                SET 
+                    XCoord = @XCoord, 
+                    YCoord = @YCoord, 
+                    Hunger = @Hunger, 
+                    Thirst = @Thirst, 
+                    ShortTermMemory = @ShortTermMemory, 
+                    ReproductionCooldown = @ReproductionCooldown
                 WHERE AgentId = @AgentId
             """;
 
@@ -106,8 +112,8 @@ namespace LandSim.Database
 
             sql =
             """
-                INSERT INTO Agents (XCoord, YCoord, AgentOwnerId, Hunger, Thirst)
-                VALUES (@XCoord, @YCoord, @AgentOwnerId, @Hunger, @Thirst)
+                INSERT INTO Agents (XCoord, YCoord, AgentOwnerId, Hunger, Thirst, ReproductionCooldown)
+                VALUES (@XCoord, @YCoord, @AgentOwnerId, @Hunger, @Thirst, @ReproductionCooldown)
             """;
 
             foreach (var agent in updates.AddedAgents)
@@ -167,7 +173,8 @@ namespace LandSim.Database
                     AgentOwnerId,
                     Hunger,
                     Thirst,
-                    ShortTermMemory
+                    ShortTermMemory,
+                    ReproductionCooldown
                 FROM Agents
             """;
 
@@ -312,7 +319,8 @@ namespace LandSim.Database
                     VegitationSpawnChance = @VegitationSpawnChance,
                     VegitationSpreadChance = @VegitationSpreadChance,
                     VegitationGrowthRate = @VegitationGrowthRate,
-                    VegitationDecreaseFromMovement = @VegitationDecreaseFromMovement
+                    VegitationDecreaseFromMovement = @VegitationDecreaseFromMovement,
+                    ReproductionCooldownRate = @ReproductionCooldownRate
                 WHERE SimulationConfigId = @SimulationConfigId
             """;
 
@@ -339,7 +347,8 @@ namespace LandSim.Database
                     VegitationSpawnChance,
                     VegitationSpreadChance,
                     VegitationGrowthRate,
-                    VegitationDecreaseFromMovement
+                    VegitationDecreaseFromMovement,
+                    ReproductionCooldownRate
                 )
                 VALUES (
                     @ConsumableSpawnChance,
@@ -355,7 +364,8 @@ namespace LandSim.Database
                     @VegitationSpawnChance,
                     @VegitationSpreadChance,
                     @VegitationGrowthRate,
-                    @VegitationDecreaseFromMovement
+                    @VegitationDecreaseFromMovement,
+                    @ReproductionCooldownRate
                 )
                 RETURNING SimulationConfigId
             """;

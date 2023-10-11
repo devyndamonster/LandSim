@@ -9,6 +9,7 @@
         MoveDown,
         Eat,
         Drink,
+        Reproduce
     }
 
     public static class AgentActionTypeExtensions

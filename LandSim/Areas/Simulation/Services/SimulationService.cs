@@ -165,6 +165,46 @@ namespace LandSim.Areas.Simulation.Services
                     };
                 })
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
+
+            var reproductionRequests = updatedAgentGrid
+                .Where(agent => agent.Value is not null)
+                .Where(agent =>
+                {
+                    agentActions.TryGetValue(agent.Value!.AgentId, out var action);
+                    return action?.ActionType == AgentActionType.Reproduce;
+                })
+                .ToDictionary(
+                    agent => agent.Value!.AgentId,
+                    agent =>
+                    {
+                        var otherAgent = updatedAgentGrid.GetImmediateNeighbors(agent.x, agent.y)
+                            .Where(other => other.AgentOwnerId == agent.Value!.AgentOwnerId)
+                            .FirstOrDefault();
+
+                        return otherAgent?.AgentId;
+                    });
+
+            //Get succsessful reproductions
+            var successfulParents = reproductionRequests
+                .Where(request =>
+                {
+                    var self = request.Key;
+                    var target = request.Value;
+
+                    if (target is null)
+                    {
+                        return false;
+                    }
+
+                    if (reproductionRequests.TryGetValue(target.Value, out var otherTarget))
+                    {
+                        return otherTarget == self;
+                    }
+
+                    return false;
+                })
+                .Select(pair => Math.Min(pair.Key, pair.Value!.Value))
+                .Distinct();
                 
             //New Agents
             updatedAgentGrid = updatedAgentGrid.Map(agent =>

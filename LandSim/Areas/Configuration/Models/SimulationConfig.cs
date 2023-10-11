@@ -32,6 +32,8 @@
 
         public float VegitationDecreaseFromMovement { get; set; } = 0.1f;
 
+        public float ReproductionCooldownRate { get; set; } = 0.01f;
+
 
     }
 }

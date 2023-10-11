@@ -24,7 +24,13 @@ namespace LandSim.Areas.Agents.Models
         /// </summary>
         public float Thirst { get; init; } = 1f;
 
+        /// <summary>
+        /// Cooldown until agent can reproducte again, with zero being ready to reproduce.
+        /// </summary>
+        public float ReproductionCooldown { get; init; } = 1f;
+
         [MaxLength(300)]
         public string ShortTermMemory { get; init; } = string.Empty;
+
     }
 }
