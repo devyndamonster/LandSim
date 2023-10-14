@@ -1,9 +1,11 @@
-﻿using LandSim.Areas.Agents.Models;
+﻿using AntDesign;
+using LandSim.Areas.Agents.Models;
 using LandSim.Areas.Configuration.Models;
 using LandSim.Areas.Map.Enums;
 using LandSim.Areas.Map.Models;
 using LandSim.Areas.Simulation.Models;
 using LandSim.Extensions;
+using System;
 
 namespace LandSim.Areas.Simulation.Services
 {
@@ -166,68 +168,9 @@ namespace LandSim.Areas.Simulation.Services
                 })
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
 
-            var reproductionRequests = updatedAgentGrid
-                .Where(agent => agent.Value is not null)
-                .Where(agent =>
-                {
-                    agentActions.TryGetValue(agent.Value!.AgentId, out var action);
-                    return action?.ActionType == AgentActionType.Reproduce;
-                })
-                .ToDictionary(
-                    agent => agent.Value!.AgentId,
-                    agent =>
-                    {
-                        var otherAgent = updatedAgentGrid.GetImmediateNeighbors(agent.x, agent.y)
-                            .Where(other => other.AgentOwnerId == agent.Value!.AgentOwnerId)
-                            .FirstOrDefault();
+            //TODO: We could have context object and chain calls for simulation updates
 
-                        return otherAgent?.AgentId;
-                    });
-
-            //Get succsessful reproductions
-            var successfulParents = reproductionRequests
-                .Where(request =>
-                {
-                    var self = request.Key;
-                    var target = request.Value;
-
-                    if (target is null)
-                    {
-                        return false;
-                    }
-
-                    if (reproductionRequests.TryGetValue(target.Value, out var otherTarget))
-                    {
-                        return otherTarget == self;
-                    }
-
-                    return false;
-                })
-                .Select(pair => Math.Min(pair.Key, pair.Value!.Value))
-                .Distinct();
-                
-            //New Agents
-            updatedAgentGrid = updatedAgentGrid.Map(agent =>
-            {
-                if (agent.Value is null)
-                {
-                    var tile = currentWorldData.TerrainTiles[agent.x, agent.y];
-
-                    if (tile?.TerrainType == TerrainType.Sand && random.NextDouble() <= config.AgentSpawnChange)
-                    {
-                        return new Agent
-                        {
-                            XCoord = tile.XCoord,
-                            YCoord = tile.YCoord,
-                            AgentOwnerId = agentOwners.Shuffle().First().AgentOwnerId,
-                            Hunger = 1,
-                            Thirst = 1,
-                        };
-                    }
-                }
-
-                return agent.Value;
-            });
+            updatedAgentGrid = GetWithNewAgents(currentWorldData, updatedAgentGrid, agents, agentActions, agentOwners, config);
 
             var updatedTilesGrid = currentWorldData.TerrainTiles.Map(tile =>
             {
@@ -316,6 +259,110 @@ namespace LandSim.Areas.Simulation.Services
                 AddedAgents = agentAdditions.ToList(),
                 RemovedAgents = agentRemovals.ToList(),
             };
+        }
+
+        private Agent?[,] GetWithNewAgents(
+            WorldData worldData, 
+            Agent?[,] agentGrid, 
+            Dictionary<int, Agent> agents,
+            Dictionary<int, AgentAction> agentActions,
+            IEnumerable<AgentOwner> agentOwners,
+            SimulationConfig config)
+        {
+            var random = new Random();
+
+            var reproductionRequests = agentGrid
+                .Where(agent => agent.Value is not null)
+                .Where(agent =>
+                {
+                    agentActions.TryGetValue(agent.Value!.AgentId, out var action);
+                    return action?.ActionType == AgentActionType.Reproduce;
+                })
+                .ToDictionary(
+                    agent => agent.Value!.AgentId,
+                    agent =>
+                    {
+                        var otherAgent = agentGrid.GetImmediateNeighbors(agent.x, agent.y)
+                            .Where(other => other.AgentOwnerId == agent.Value!.AgentOwnerId)
+                            .FirstOrDefault();
+
+                        return otherAgent?.AgentId;
+                    });
+
+            var successfulParents = reproductionRequests
+                .Where(request =>
+                {
+                    var self = request.Key;
+                    var target = request.Value;
+
+                    if (target is null)
+                    {
+                        return false;
+                    }
+
+                    if (reproductionRequests.TryGetValue(target.Value, out var otherTarget))
+                    {
+                        return otherTarget == self;
+                    }
+
+                    return false;
+                })
+                .Select(pair => Math.Min(pair.Key, pair.Value!.Value))
+                .Distinct();
+
+            var newChildAgents = successfulParents
+                .Select(parentId =>
+                {
+                    var parent = agents[parentId];
+                    var agentGridPostition = worldData.Bounds.GetIndexesFromLocation(parent);
+
+                    var neighboringTiles = worldData.TerrainTiles.GetImmediateNeighbors(agentGridPostition.x, agentGridPostition.y);
+                    var neighboringAgents = agentGrid.GetImmediateNeighbors(agentGridPostition.x, agentGridPostition.y);
+
+                    var spawnLocation = neighboringTiles
+                        .Where(tile => tile.IsWalkable())
+                        .Where(tile => neighboringAgents?.FirstOrDefault(tile.IsAt) is null)
+                        .Shuffle()
+                        .FirstOrDefault();
+
+                    return spawnLocation is not null ? new Agent
+                    {
+                        XCoord = spawnLocation.XCoord,
+                        YCoord = spawnLocation.YCoord,
+                        AgentOwnerId = parent.AgentOwnerId,
+                        Hunger = 1,
+                        Thirst = 1,
+                    } : null;
+                })
+                .OfType<Agent>();
+
+            return agentGrid
+                .Map(agent =>
+                {
+                    var tile = worldData.TerrainTiles[agent.x, agent.y];
+
+                    if (agent.Value is null && tile is not null)
+                    {
+                        if (newChildAgents.FirstOrDefault(tile.IsAt) is Agent child)
+                        {
+                            return child;
+                        }
+
+                        else if (tile.TerrainType == TerrainType.Sand && random.NextDouble() <= config.AgentSpawnChange)
+                        {
+                            return new Agent
+                            {
+                                XCoord = tile.XCoord,
+                                YCoord = tile.YCoord,
+                                AgentOwnerId = agentOwners.Shuffle().First().AgentOwnerId,
+                                Hunger = 1,
+                                Thirst = 1,
+                            };
+                        }
+                    }
+
+                    return agent.Value;
+                });
         }
     }
 }

@@ -39,5 +39,10 @@ namespace LandSim.Areas.Map.Models
                 MinY = minY
             };
         }
+
+        public (int x, int y) GetIndexesFromLocation(ILocation location)
+        {
+            return (location.XCoord - MinX, location.YCoord - MinY);
+        }
     }
 }
