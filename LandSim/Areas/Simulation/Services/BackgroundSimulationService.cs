@@ -68,7 +68,7 @@ namespace LandSim.Areas.Simulation.Services
                     await _agentUpdateService.SendSimulationUpdate(updateEvent);
                     _logger.LogInformation($"Published Updates - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    await Task.Delay(1000, stoppingToken);
+                    await Task.Delay(500, stoppingToken);
                 }
             }
         }

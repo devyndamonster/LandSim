@@ -3,32 +3,9 @@
 @using LandSim.Areas.Map.Models;
 @using LandSim.Areas.Map.Services;
 @using LandSim.Extensions;
+@using Excubo.Blazor.Canvas
 
-
-<div class="map-grid-container" style="grid-template-columns: repeat(@(Terrain.GetLength(1)), 1fr);">
-
-    @for (int x = 0; x < Terrain.GetLength(0); x++)
-    {
-        @for (int y = 0; y < Terrain.GetLength(1); y++)
-        {
-            int localX = x;
-            int localY = y;
-
-            <div id="[@x][@y]" class="terrain-tile" style="background-color: @(GetColorForTile(Terrain[x,y]));">
-                <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; display: flex; justify-content: center; align-items: center; color: white;">
-                    @if (Agents.IsInArray(x, y) && Agents[x, y] is not null)
-                    {
-                        <div @onclick="() => OnAgentClicked(Agents[localX, localY]!)">&#128023;</div>
-                    }
-                    else if (Consumables.IsInArray(x, y) && Consumables[x, y] is not null)
-                    {
-                        <div>&#127813;</div>
-                    }
-                </div>
-            </div>
-        }
-    }
-</div>
+<Canvas @ref="canvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" />
 
 @code {
 
@@ -46,6 +23,63 @@
 
     [Inject]
     public TerrainService TerrainService { get; set; } = default!;
+
+    private Canvas canvas = null!;
+
+    private int tileSize = 20;
+
+    private bool drawing = false;
+
+    protected override async Task OnAfterRenderAsync(bool first_render)
+    {
+        if (!drawing)
+        {
+            drawing = true;
+            await DrawGrid();
+            drawing = false;
+        }
+
+        await base.OnAfterRenderAsync(first_render);
+    }
+
+    private async Task DrawGrid()
+    {
+        await using (var ctx = await canvas.GetContext2DAsync())
+        {
+            //await ctx.ClearRectAsync(0, 0, Terrain.GetLength(0) * tileSize, Terrain.GetLength(1) * tileSize);
+            await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+            await ctx.RestoreAsync();
+            await ctx.SaveAsync();
+
+            await using (var batch = ctx.CreateBatch())
+            {
+                for (int x = 0; x < Terrain.GetLength(0); x++)
+                {
+                    for (int y = 0; y < Terrain.GetLength(1); y++)
+                    {
+                        await batch.FillStyleAsync(GetColorForTile(Terrain[x, y]));
+                        await batch.FillRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
+
+                        if (Agents[x, y] != null)
+                        {
+                            //Draw a circle over the tile
+                            await batch.FillStyleAsync("brown");
+                            await batch.BeginPathAsync();
+							await batch.ArcAsync(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+							await batch.FillAsync(FillRule.NonZero);
+                        }
+                        else if (Consumables[x, y] != null)
+                        {
+                            await batch.FillStyleAsync("red");
+                            await batch.BeginPathAsync();
+                            await batch.ArcAsync(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
+                            await batch.FillAsync(FillRule.NonZero);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     protected string GetColorForTile(TerrainTile? tile)
     {

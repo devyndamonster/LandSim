@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AntDesign" Version="0.15.5" />
     <PackageReference Include="Dapper" Version="2.0.151" />
+    <PackageReference Include="Excubo.Blazor.Canvas" Version="3.2.30" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.10">
       <PrivateAssets>all</PrivateAssets>
