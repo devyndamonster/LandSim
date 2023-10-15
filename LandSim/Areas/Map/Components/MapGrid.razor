@@ -5,7 +5,10 @@
 @using LandSim.Extensions;
 @using Excubo.Blazor.Canvas
 
-<Canvas @ref="canvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" />
+<div style="position: relative;">
+    <Canvas @ref="terrainCanvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" style="position: absolute; left: 0; top: 0; z-index: 0;" />
+    <Canvas @ref="emojiCanvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" style="position: absolute; left: 0; top: 0; z-index: 1;" />
+</div>
 
 @code {
 
@@ -24,29 +27,32 @@
     [Inject]
     public TerrainService TerrainService { get; set; } = default!;
 
-    private Canvas canvas = null!;
+    private Canvas terrainCanvas = null!;
+    private Canvas emojiCanvas = null!;
 
     private int tileSize = 20;
-
     private bool drawing = false;
+    public Consumable?[,]? previousConsumables { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool first_render)
     {
         if (!drawing)
         {
             drawing = true;
-            await DrawGrid();
+            await DrawTerrain();
+            await DrawEmojis();
             drawing = false;
+
+            previousConsumables = Consumables;
         }
 
         await base.OnAfterRenderAsync(first_render);
     }
 
-    private async Task DrawGrid()
+    private async Task DrawTerrain()
     {
-        await using (var ctx = await canvas.GetContext2DAsync())
+        await using (var ctx = await terrainCanvas.GetContext2DAsync())
         {
-            //await ctx.ClearRectAsync(0, 0, Terrain.GetLength(0) * tileSize, Terrain.GetLength(1) * tileSize);
             await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
             await ctx.RestoreAsync();
             await ctx.SaveAsync();
@@ -59,21 +65,45 @@
                     {
                         await batch.FillStyleAsync(GetColorForTile(Terrain[x, y]));
                         await batch.FillRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
+                    }
+                }
+            }
+        }
+    }
 
+    private async Task DrawEmojis()
+    {
+        await using (var ctx = await emojiCanvas.GetContext2DAsync())
+        {
+            await ctx.SetTransformAsync(1, 0, 0, 1, 0, 0);
+            await ctx.RestoreAsync();
+            await ctx.SaveAsync();
+
+            await using (var batch = ctx.CreateBatch())
+            {
+                for (int x = 0; x < Terrain.GetLength(0); x++)
+                {
+                    for (int y = 0; y < Terrain.GetLength(1); y++)
+                    {
                         if (Agents[x, y] != null)
                         {
-                            //Draw a circle over the tile
-                            await batch.FillStyleAsync("brown");
-                            await batch.BeginPathAsync();
-							await batch.ArcAsync(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
-							await batch.FillAsync(FillRule.NonZero);
+                            await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
+                            await batch.TextAlignAsync(TextAlign.Center);
+                            await batch.TextBaseLineAsync(TextBaseLine.Middle);
+                            await batch.FontAsync("20px serif");
+                            await batch.FillTextAsync("🐗", x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
                         }
-                        else if (Consumables[x, y] != null)
+                        else if (Consumables[x, y] is not null && (previousConsumables is null || previousConsumables[x, y] is null))
                         {
-                            await batch.FillStyleAsync("red");
-                            await batch.BeginPathAsync();
-                            await batch.ArcAsync(x * tileSize + tileSize / 2, y * tileSize + tileSize / 2, tileSize / 2, 0, 2 * Math.PI);
-                            await batch.FillAsync(FillRule.NonZero);
+                            await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
+                            await batch.TextAlignAsync(TextAlign.Center);
+                            await batch.TextBaseLineAsync(TextBaseLine.Middle);
+                            await batch.FontAsync("20px serif");
+                            await batch.FillTextAsync("🍅", x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
+                        }
+                        else if(Consumables[x, y] is null && Agents[x, y] is null)
+                        {
+                            await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
                         }
                     }
                 }
