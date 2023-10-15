@@ -1,4 +1,4 @@
-using Agent.Boar;
+using Agents.Boar;
 
 var builder = WebApplication.CreateBuilder(args);
 

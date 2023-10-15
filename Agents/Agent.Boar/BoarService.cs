@@ -5,7 +5,7 @@ using LandSim.Areas.Map.Models;
 using LandSim.Extensions;
 using System.Linq;
 
-namespace Agent.Boar
+namespace Agents.Boar
 {
     public class BoarService
     {
@@ -68,10 +68,20 @@ namespace Agent.Boar
                 WanderStepsRemaining = shortTermMemory.WanderStepsRemaining <= 0 ? 10 : shortTermMemory.WanderStepsRemaining - 1
             };
 
+            var closestReproductionTarget = context.Agents
+                .Where(agent => 
+                    agent.AgentId != context.Agent.AgentId 
+                    && agent.AgentOwnerId == context.Agent.AgentOwnerId 
+                    && agent.ReproductionCooldown <= 0)
+                .OrderBy(context.Agent.DistanceTo)
+                .FirstOrDefault();
+
             ILocation destination = context.Agent switch
             {
                 { Thirst: < 0.25f } when shortTermMemory.WaterSource is not null => shortTermMemory.WaterSource,
                 { Thirst: < 0.25f } when shortTermMemory.WaterSource is null => shortTermMemory.WanderDestination,
+                { Hunger: < 0.25f } when closestConsumable is not null => closestConsumable,
+                { ReproductionCooldown: <= 0 } when closestReproductionTarget is not null && closestReproductionTarget.ReproductionCooldown <= 0 => closestReproductionTarget,
                 var agent when closestConsumable is not null => closestConsumable,
                 _ => shortTermMemory.WanderDestination
             };
@@ -82,12 +92,13 @@ namespace Agent.Boar
 
             var agentAction = nextMoveTarget switch
             {
+                Agent agent when agent.ReproductionCooldown <= 0 && context.Agent.ReproductionCooldown <= 0 && context.Agent.IsNextTo(agent) => AgentActionType.Reproduce,
                 var dest when dest.XCoord < context.Agent.XCoord => AgentActionType.MoveLeft,
                 var dest when dest.XCoord > context.Agent.XCoord => AgentActionType.MoveRight,
                 var dest when dest.YCoord < context.Agent.YCoord => AgentActionType.MoveUp,
                 var dest when dest.YCoord > context.Agent.YCoord => AgentActionType.MoveDown,
                 Consumable => AgentActionType.Eat,
-                var dest when closestWaterSource is not null && context.Agent.DistanceTo(closestWaterSource) <= 1 => AgentActionType.Drink,
+                var dest when closestWaterSource is not null && context.Agent.IsNextTo(closestWaterSource) => AgentActionType.Drink,
                 _ => AgentActionType.None
             };
 

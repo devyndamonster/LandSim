@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 using System.Text.Json;
 
-namespace Agent.Boar
+namespace Agents.Boar
 {
     [ApiController]
     [Route("boar")]

@@ -1,6 +1,6 @@
 ﻿using LandSim.Areas.Map.Models;
 
-namespace Agent.Boar
+namespace Agents.Boar
 {
     public class Destination : ILocation
     {

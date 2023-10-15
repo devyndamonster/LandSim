@@ -18,6 +18,11 @@
         {
             return Math.Abs(location.XCoord - other.XCoord) + Math.Abs(location.YCoord - other.YCoord);
         }
+
+        public static bool IsNextTo(this ILocation location, ILocation other)
+        {
+            return location.DistanceTo(other) == 1;
+        }
     }
 }
 

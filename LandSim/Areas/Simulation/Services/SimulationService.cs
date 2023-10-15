@@ -164,6 +164,7 @@ namespace LandSim.Areas.Simulation.Services
                     return agent with
                     {
                         ShortTermMemory = action?.UpdatedShortTermMemory ?? agent.ShortTermMemory,
+                        ReproductionCooldown = Math.Max(0, agent.ReproductionCooldown - config.ReproductionCooldownRate),
                     };
                 })
                 .MapLocationsToBoundedGrid(currentWorldData.Bounds);
@@ -276,7 +277,7 @@ namespace LandSim.Areas.Simulation.Services
                 .Where(agent =>
                 {
                     agentActions.TryGetValue(agent.Value!.AgentId, out var action);
-                    return action?.ActionType == AgentActionType.Reproduce;
+                    return action?.ActionType == AgentActionType.Reproduce && agent.Value.ReproductionCooldown <= 0;
                 })
                 .ToDictionary(
                     agent => agent.Value!.AgentId,
@@ -340,6 +341,14 @@ namespace LandSim.Areas.Simulation.Services
                 .Map(agent =>
                 {
                     var tile = worldData.TerrainTiles[agent.x, agent.y];
+
+                    if(agent.Value is not null && successfulParents.Any(parent => parent == agent.Value.AgentId))
+                    {
+                        return agent.Value with
+                        {
+                            ReproductionCooldown = 1
+                        };
+                    }
 
                     if (agent.Value is null && tile is not null)
                     {

@@ -1,6 +1,6 @@
 ﻿using LandSim.Areas.Agents.Models;
 
-namespace Agent.Boar
+namespace Agents.Boar
 {
     public class SimulationClient
     {

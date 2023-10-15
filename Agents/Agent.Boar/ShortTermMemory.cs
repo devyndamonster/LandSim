@@ -3,7 +3,7 @@ using System.IO.Compression;
 using LandSim.Areas.Agents.Models;
 using LandSim.Areas.Map.Models;
 
-namespace Agent.Boar
+namespace Agents.Boar
 {
     public record ShortTermMemory
     {
