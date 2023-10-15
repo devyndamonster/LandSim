@@ -5,9 +5,9 @@
 @using LandSim.Extensions;
 @using Excubo.Blazor.Canvas
 
-<div style="position: relative;">
+<div style="position: relative;" @onclick="OnGridClicked">
     <Canvas @ref="terrainCanvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" style="position: absolute; left: 0; top: 0; z-index: 0;" />
-    <Canvas @ref="emojiCanvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" style="position: absolute; left: 0; top: 0; z-index: 1;" />
+    <Canvas @ref="emojiCanvas" width="@(Terrain.GetLength(0) * tileSize)" height="@(Terrain.GetLength(1) * tileSize)" style="position: absolute; left: 0; top: 0; z-index: 1;"/>
 </div>
 
 @code {
@@ -121,9 +121,13 @@
         return (new LandSim.Areas.Map.Models.Color(0)).GetCssColor();
     }
 
-    public void OnAgentClicked(Agent agent)
+    public void OnGridClicked(MouseEventArgs e)
     {
-        if(OnAgentSelected != null)
+        var tileX = (int)(e.OffsetX / tileSize);
+        var tileY = (int)(e.OffsetY / tileSize);
+
+        var agent = Agents[tileX, tileY];
+        if(OnAgentSelected != null && agent is not null)
         {
             OnAgentSelected(agent);
         }
