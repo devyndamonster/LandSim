@@ -81,7 +81,7 @@ namespace Agents.Boar
                 { Thirst: < 0.25f } when shortTermMemory.WaterSource is not null => shortTermMemory.WaterSource,
                 { Thirst: < 0.25f } when shortTermMemory.WaterSource is null => shortTermMemory.WanderDestination,
                 { Hunger: < 0.25f } when closestConsumable is not null => closestConsumable,
-                { ReproductionCooldown: <= 0 } when closestReproductionTarget is not null && closestReproductionTarget.ReproductionCooldown <= 0 => closestReproductionTarget,
+                { ReproductionCooldown: <= 0 } when closestReproductionTarget is not null => closestReproductionTarget,
                 var agent when closestConsumable is not null => closestConsumable,
                 _ => shortTermMemory.WanderDestination
             };
@@ -92,7 +92,7 @@ namespace Agents.Boar
 
             var agentAction = nextMoveTarget switch
             {
-                Agent agent when agent.ReproductionCooldown <= 0 && context.Agent.ReproductionCooldown <= 0 && context.Agent.IsNextTo(agent) => AgentActionType.Reproduce,
+                _ when closestReproductionTarget is not null && context.Agent.ReproductionCooldown <= 0 && context.Agent.IsNextTo(closestReproductionTarget) => AgentActionType.Reproduce,
                 var dest when dest.XCoord < context.Agent.XCoord => AgentActionType.MoveLeft,
                 var dest when dest.XCoord > context.Agent.XCoord => AgentActionType.MoveRight,
                 var dest when dest.YCoord < context.Agent.YCoord => AgentActionType.MoveUp,

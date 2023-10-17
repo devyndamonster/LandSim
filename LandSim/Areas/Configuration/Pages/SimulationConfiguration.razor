@@ -47,6 +47,9 @@
     <FormItem Label="Vegitation Decrease From Movement">
         <AntDesign.InputNumber @bind-Value="context.VegitationDecreaseFromMovement" Min="0" Max="1" />
     </FormItem>
+    <FormItem Label="Reproduction Cooldown Rate">
+        <AntDesign.InputNumber @bind-Value="context.ReproductionCooldownRate" Min="0" Max="1" />
+    </FormItem>
 
     <Button OnClick="SaveSettings">Save Settings</Button>
 </Form>
