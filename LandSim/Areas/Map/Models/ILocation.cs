@@ -23,6 +23,11 @@
         {
             return location.DistanceTo(other) == 1;
         }
+
+        public static (int deltaX, int deltaY) Difference(this ILocation location, ILocation other)
+        {
+            return (other.XCoord - location.XCoord, other.YCoord - location.YCoord);
+        }
     }
 }
 

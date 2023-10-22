@@ -24,6 +24,9 @@
     [Parameter]
     public Action<Agent>? OnAgentSelected { get; set; }
 
+    [Parameter]
+    public Action<TerrainTile>? OnTerrainSelected { get; set; }
+
     [Inject]
     public TerrainService TerrainService { get; set; } = default!;
 
@@ -85,7 +88,7 @@
                 {
                     for (int y = 0; y < Terrain.GetLength(1); y++)
                     {
-                        if (Agents[x, y] != null)
+                        if (Agents.IsInArray(x, y) && Agents[x, y] != null)
                         {
                             await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
                             await batch.TextAlignAsync(TextAlign.Center);
@@ -93,7 +96,7 @@
                             await batch.FontAsync("20px serif");
                             await batch.FillTextAsync("🐗", x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
                         }
-                        else if (Consumables[x, y] is not null && (previousConsumables is null || previousConsumables[x, y] is null))
+                        else if (Consumables.IsInArray(x, y) && Consumables[x, y] is not null && (previousConsumables is null || previousConsumables[x, y] is null))
                         {
                             await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
                             await batch.TextAlignAsync(TextAlign.Center);
@@ -101,7 +104,7 @@
                             await batch.FontAsync("20px serif");
                             await batch.FillTextAsync("🍅", x * tileSize + tileSize / 2, y * tileSize + tileSize / 2);
                         }
-                        else if(Consumables[x, y] is null && Agents[x, y] is null)
+                        else if (Consumables.IsInArray(x, y) && Consumables[x, y] is null && Agents.IsInArray(x, y) && Agents[x, y] is null)
                         {
                             await batch.ClearRectAsync(x * tileSize, y * tileSize, tileSize, tileSize);
                         }
@@ -126,10 +129,17 @@
         var tileX = (int)(e.OffsetX / tileSize);
         var tileY = (int)(e.OffsetY / tileSize);
 
+        //TODO: Deprecate this to instead use the generic on terrain selected event
         var agent = Agents[tileX, tileY];
         if(OnAgentSelected != null && agent is not null)
         {
             OnAgentSelected(agent);
+        }
+
+        var terrain = Terrain[tileX, tileY];
+        if (OnTerrainSelected != null && terrain is not null)
+        {
+            OnTerrainSelected(terrain);
         }
     }
 

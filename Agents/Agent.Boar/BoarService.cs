@@ -86,9 +86,11 @@ namespace Agents.Boar
                 _ => shortTermMemory.WanderDestination
             };
 
+            var otherAgents = context.Agents.Where(agent => agent.AgentId != context.Agent.AgentId);
+
             ILocation nextMoveTarget = context.Agent.IsAt(destination) 
                 ? destination 
-                : GetNextMoveTarget(context.Agent, destination, context.TerrainTiles, context.SimulationConfig ?? new SimulationConfig());
+                : GetNextMoveTarget(context.Agent, destination, context.TerrainTiles, otherAgents, context.SimulationConfig ?? new SimulationConfig());
 
             var agentAction = nextMoveTarget switch
             {
@@ -115,7 +117,7 @@ namespace Agents.Boar
             };
         }
 
-        private ILocation GetNextMoveTarget(ILocation currentLocation, ILocation destination, IEnumerable<TerrainTile> tiles, SimulationConfig config)
+        private ILocation GetNextMoveTarget(ILocation currentLocation, ILocation destination, IEnumerable<TerrainTile> tiles, IEnumerable<ILocation> obstacles, SimulationConfig config)
         {
             var nodes = tiles
                 .Select(tile => new LocationNode(tile))
@@ -130,7 +132,7 @@ namespace Agents.Boar
             var startNode = nodes.First(currentLocation.IsAt);
             var endNode = nodes.First(destination.IsAt);
 
-            var path = CalculatePath(startNode, endNode, grid, config);
+            var path = CalculatePath(startNode, endNode, grid, obstacles, config);
             return path.FirstOrDefault()?.Tile ?? currentLocation;
         }
 
@@ -142,7 +144,7 @@ namespace Agents.Boar
         });
 
         //Calculate path using A* algorithm
-        private List<LocationNode> CalculatePath(LocationNode start, LocationNode end, LocationNode?[,] grid, SimulationConfig config)
+        private List<LocationNode> CalculatePath(LocationNode start, LocationNode end, LocationNode?[,] grid, IEnumerable<ILocation> obstacles, SimulationConfig config)
         {
             var open = new List<LocationNode>();
             var closed = new List<LocationNode>();
@@ -166,19 +168,42 @@ namespace Agents.Boar
                     return path;
                 }
 
-                foreach(var neighbor in grid.GetImmediateNeighbors(current))
+                var immediateNeightbors = grid.GetImmediateNeighbors(current);
+
+                foreach(var neighbor in immediateNeightbors)
                 {
                     if(!neighbor.IsAt(end) && (!neighbor.Tile.IsWalkable() || closed.Any(neighbor.IsAt)))
                     {
                         continue;
                     }
 
+                    //If there is an obstacle directly in front of our direction of travel, prefer to go to the right
+                    var directionOfTravel = current.Parent?.Difference(current) ?? (0, 0);
+
+                    var nextDestinationInDirection = new Destination
+                    {
+                        XCoord = current.XCoord + directionOfTravel.deltaX,
+                        YCoord = current.YCoord + directionOfTravel.deltaY
+                    };
+
+                    var obstacleInDirectionOfTravel = obstacles.FirstOrDefault(nextDestinationInDirection.IsAt);
+
+                    //Get tile to the right of current based on direction of travel
+                    var nextDestinationToRight = new Destination
+                    {
+                        XCoord = current.XCoord + directionOfTravel.deltaY,
+                        YCoord = current.YCoord - directionOfTravel.deltaX
+                    };
+
+                    var prioritizeRight = obstacleInDirectionOfTravel is not null;
+                    var rightPrioValue = !prioritizeRight ? 0 : neighbor.IsAt(nextDestinationToRight) ? 0 : 1;
+
                     var heightIncrease = MathF.Max(0, neighbor.Tile.Height - current.Tile.Height);
                     var heightCost = heightIncrease * config.MovementHungerCost;
                     var vegitationCost = neighbor.Tile.VegetationLevel * config.VegitationMovementHungerCost;
                     var baseMovementCost = GetDistance(current, neighbor) * config.MovementHungerCost;
 
-                    var movementCost = current.GCost + baseMovementCost + heightCost + vegitationCost;
+                    var movementCost = current.GCost + baseMovementCost + heightCost + vegitationCost + rightPrioValue;
                     if(movementCost < neighbor.GCost || !open.Any(neighbor.IsAt))
                     {
                         neighbor.GCost = movementCost;

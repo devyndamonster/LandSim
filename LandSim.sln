@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LandSim", "LandSim\LandSim.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Agent.Boar", "Agents\Agent.Boar\Agent.Boar.csproj", "{734AC8B2-D605-4127-8A71-7D1963703B6D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LandSim.UnitTests", "LandSim.UnitTests\LandSim.UnitTests.csproj", "{2B5308C1-742C-48FB-AD75-2D06F2B194E2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LandSim.UnitTests", "LandSim.UnitTests\LandSim.UnitTests.csproj", "{2B5308C1-742C-48FB-AD75-2D06F2B194E2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

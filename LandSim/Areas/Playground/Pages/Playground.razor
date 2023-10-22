@@ -1,0 +1,103 @@
+﻿@page "/playground"
+@using LandSim.Areas.Agents.Models;
+@using LandSim.Areas.Configuration.Models;
+@using LandSim.Areas.Map.Components
+@using LandSim.Areas.Map.Enums;
+@using LandSim.Areas.Map.Models;
+@using LandSim.Areas.Simulation.Services;
+@using LandSim.Extensions;
+
+<PageTitle>Playground</PageTitle>
+
+<GridRow Style="height:100%;">
+    <GridCol Style="padding: 5px; flex: none; height: 100%; overflow:scroll">
+        <Form Model="@settings" Layout="@FormLayout.Vertical">
+            <FormItem Label="Width">
+                <Input @bind-Value="context.Width" />
+            </FormItem>
+            <FormItem Label="Height">
+                <Input @bind-Value="context.Height" />
+            </FormItem>
+            <Button OnClick="UpdateSettings">Update Settings</Button>
+            <Button OnClick="StepSimulation">Step Simulation</Button>
+        </Form>
+    </GridCol>
+    <GridCol Flex=@("auto")>
+        <div style="flex-grow:1; height:100%; position:relative; padding:5px;">
+            <div style="height:100%; width:100%; position:relative;">
+                <div style="position:absolute; top:0px; bottom:0px; left:0px; right:0px; overflow:scroll;">
+                    <MapGrid Terrain="worldData.TerrainTiles" Consumables="worldData.Consumables" Agents="worldData.Agents" OnTerrainSelected="OnTerrainClicked" />
+                </div>
+            </div>
+            <Drawer Width="400" Closable="true" Visible="selectedLocation is not null" Placement="right" Title='("Edit")' OnClose="() => selectedLocation = null">
+                @if(selectedLocation is not null)
+                {
+                    @if (worldData.Agents[selectedLocation.XCoord, selectedLocation.YCoord] is Agent selectedAgent)
+                    {
+                        <Button>Delete Agent</Button>
+                    }
+                    else
+                    {
+                        <Button>Spawn Agent</Button>
+                    }
+                }
+            </Drawer>
+        </div>
+    </GridCol>
+</GridRow>
+
+@code {
+
+    public class PlaygroundSettings
+    {
+        public int Width { get; set; } = 10;
+        public int Height { get; set; } = 10;
+    }
+
+    private WorldData worldData = new WorldData(new TerrainTile[0], new Consumable[0], new Agent[0]);
+    private List<AgentAction> queuedAgentActions = new List<AgentAction>();
+    private PlaygroundSettings settings = new PlaygroundSettings();
+    private ILocation? selectedLocation;
+
+    public void UpdateSettings()
+    {
+        TerrainTile[,] terrain = (new TerrainTile[settings.Width, settings.Height])
+            .Map(tile => new TerrainTile
+            {
+                XCoord = tile.x,
+                YCoord = tile.y,
+                TerrainType = TerrainType.Sand,
+            })!;
+
+        var consumables = new Consumable[settings.Width, settings.Height];
+        var agents = new Agent[settings.Width, settings.Height];
+        var bounds = Bounds.FromLocations(terrain.Select(t => t.Value!).ToArray());
+
+        worldData = new WorldData(bounds, terrain, consumables, agents);
+        StateHasChanged();
+    }
+
+    public void OnTerrainClicked(TerrainTile tile)
+    {
+        selectedLocation = tile;
+        StateHasChanged();
+    }
+
+    public void StepSimulation()
+    {
+        var agentOwners = new AgentOwner[]
+        {
+            new AgentOwner()
+            {
+                AgentOwnerId = 0,
+            }
+        };
+
+        var simulationService = new SimulationService();
+        worldData = simulationService.GetUpdatedWorldData(worldData, new SimulationConfig(), agentOwners, queuedAgentActions);
+
+        StateHasChanged();
+    }
+
+
+}
