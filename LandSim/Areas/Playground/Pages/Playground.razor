@@ -29,16 +29,17 @@
                     <MapGrid Terrain="worldData.TerrainTiles" Consumables="worldData.Consumables" Agents="worldData.Agents" OnTerrainSelected="OnTerrainClicked" />
                 </div>
             </div>
-            <Drawer Width="400" Closable="true" Visible="selectedLocation is not null" Placement="right" Title='("Edit")' OnClose="() => selectedLocation = null">
+            <Drawer Width="400" Closable="true" Visible="selectedLocation is not null" Placement="right" Title='($"Edit {selectedLocation?.XCoord} - {selectedLocation?.YCoord}")' OnClose="() => selectedLocation = null">
                 @if(selectedLocation is not null)
                 {
                     @if (worldData.Agents[selectedLocation.XCoord, selectedLocation.YCoord] is Agent selectedAgent)
                     {
-                        <Button>Delete Agent</Button>
+                        <Button OnClick="() => DeleteAgent(selectedLocation)">Delete Agent</Button>
+                        <EnumSelect TEnum="AgentActionType" @bind-Value="GetSelectedAgentAction(selectedAgent).ActionType" />
                     }
                     else
                     {
-                        <Button>Spawn Agent</Button>
+                        <Button OnClick="() => SpawnAgent(selectedLocation)">Spawn Agent</Button>
                     }
                 }
             </Drawer>
@@ -59,6 +60,12 @@
     private PlaygroundSettings settings = new PlaygroundSettings();
     private ILocation? selectedLocation;
 
+    protected override void OnInitialized()
+    {
+        UpdateSettings();
+        base.OnInitialized();
+    }
+
     public void UpdateSettings()
     {
         TerrainTile[,] terrain = (new TerrainTile[settings.Width, settings.Height])
@@ -77,9 +84,47 @@
         StateHasChanged();
     }
 
+    public AgentAction GetSelectedAgentAction(Agent agent)
+    {
+        return queuedAgentActions.First(action => action.AgentId == agent.AgentId);
+    }
+
     public void OnTerrainClicked(TerrainTile tile)
     {
         selectedLocation = tile;
+        StateHasChanged();
+    }
+
+    public void SpawnAgent(ILocation location)
+    {
+        var largestAgentId = worldData.Agents.Select(a => a.Value?.AgentId ?? 0).Max();
+        var nextAgentId = largestAgentId + 1;
+
+        worldData.Agents[location.XCoord, location.YCoord] = new Agent()
+        {
+            AgentId = nextAgentId,
+            AgentOwnerId = 0,
+            XCoord = location.XCoord,
+            YCoord = location.YCoord,
+        };
+
+        queuedAgentActions.Add(new AgentAction
+        {
+            AgentId = nextAgentId,
+            ActionType = AgentActionType.None,
+            AgentActionId = queuedAgentActions.Count(),
+        });
+
+        StateHasChanged();
+    }
+
+    public void DeleteAgent(ILocation location)
+    {
+        var agent = worldData.Agents[location.XCoord, location.YCoord]!;
+
+        worldData.Agents[location.XCoord, location.YCoord] = null;
+        queuedAgentActions.RemoveAll(action => action.AgentId == agent.AgentId);
+
         StateHasChanged();
     }
 
