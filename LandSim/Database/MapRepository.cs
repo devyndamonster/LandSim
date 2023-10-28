@@ -320,7 +320,9 @@ namespace LandSim.Database
                     VegitationSpreadChance = @VegitationSpreadChance,
                     VegitationGrowthRate = @VegitationGrowthRate,
                     VegitationDecreaseFromMovement = @VegitationDecreaseFromMovement,
-                    ReproductionCooldownRate = @ReproductionCooldownRate
+                    ReproductionCooldownRate = @ReproductionCooldownRate,
+                    IsPaused = @IsPaused,
+                    SimulationRate = @SimulationRate
                 WHERE SimulationConfigId = @SimulationConfigId
             """;
 
@@ -348,7 +350,9 @@ namespace LandSim.Database
                     VegitationSpreadChance,
                     VegitationGrowthRate,
                     VegitationDecreaseFromMovement,
-                    ReproductionCooldownRate
+                    ReproductionCooldownRate,
+                    IsPaused,
+                    SimulationRate
                 )
                 VALUES (
                     @ConsumableSpawnChance,
@@ -365,7 +369,9 @@ namespace LandSim.Database
                     @VegitationSpreadChance,
                     @VegitationGrowthRate,
                     @VegitationDecreaseFromMovement,
-                    @ReproductionCooldownRate
+                    @ReproductionCooldownRate,
+                    @IsPaused,
+                    @SimulationRate
                 )
                 RETURNING SimulationConfigId
             """;

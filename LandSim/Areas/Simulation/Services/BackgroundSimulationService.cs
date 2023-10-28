@@ -42,33 +42,41 @@ namespace LandSim.Areas.Simulation.Services
                     _logger.LogInformation($"Running background sim loop - {DateTime.Now}");
                     stopWatch.Restart();
 
-                    var currentWorldData = await mapRepository.GetWorldData();
-                    var agentAction = await mapRepository.PopAgentActions();
-                    var owners = await mapRepository.GetAgentOwners();
                     var config = (await mapRepository.GetConfigs()).FirstOrDefault(new SimulationConfig());
-                    _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, config, owners, agentAction);
-                    _logger.LogInformation($"Got Updated World - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
-
-                    var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData, updatedWorldData);
-                    _logger.LogInformation($"Got Updates From World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
-
-                    await mapRepository.SaveSimulationUpdates(simulationUpdates);
-                    _logger.LogInformation($"Saved Terrain - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
-
-                    var updateEvent = new MapUpdateEvent
+                    if (!config.IsPaused)
                     {
-                        TerrainTiles = updatedWorldData.TerrainTiles,
-                        Consumables = updatedWorldData.Consumables,
-                        Agents = updatedWorldData.Agents
-                    };
+                        var currentWorldData = await mapRepository.GetWorldData();
+                        var agentAction = await mapRepository.PopAgentActions();
+                        var owners = await mapRepository.GetAgentOwners();
+                        _logger.LogInformation($"Retrieved World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    _eventAggregator.Publish(updateEvent);
-                    await _agentUpdateService.SendSimulationUpdate(updateEvent);
-                    _logger.LogInformation($"Published Updates - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
+                        var updatedWorldData = _simulationService.GetUpdatedWorldData(currentWorldData, config, owners, agentAction);
+                        _logger.LogInformation($"Got Updated World - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
 
-                    await Task.Delay(1000, stoppingToken);
+                        var simulationUpdates = _simulationService.GetSimulationUpdates(currentWorldData, updatedWorldData);
+                        _logger.LogInformation($"Got Updates From World Data - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
+
+                        await mapRepository.SaveSimulationUpdates(simulationUpdates);
+                        _logger.LogInformation($"Saved Terrain - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
+
+                        var updateEvent = new MapUpdateEvent
+                        {
+                            TerrainTiles = updatedWorldData.TerrainTiles,
+                            Consumables = updatedWorldData.Consumables,
+                            Agents = updatedWorldData.Agents
+                        };
+
+                        _eventAggregator.Publish(updateEvent);
+                        await _agentUpdateService.SendSimulationUpdate(updateEvent);
+                        _logger.LogInformation($"Published Updates - {stopWatch.GetElapsedMillisecondsAndRestart()}ms");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Simulation Is Paused");
+                    }
+                    
+                    await Task.Delay(config.SimulationRate, stoppingToken);
                 }
             }
         }

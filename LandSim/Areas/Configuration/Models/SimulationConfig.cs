@@ -34,6 +34,10 @@
 
         public float ReproductionCooldownRate { get; set; } = 0.01f;
 
+        public bool IsPaused { get; set; } = true;
+
+        public int SimulationRate { get; set; } = 1000;
+
 
     }
 }
